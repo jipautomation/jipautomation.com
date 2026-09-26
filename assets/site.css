@@ -440,4 +440,29 @@ section[id]{scroll-margin-top:calc(58px + 12px)}
 .hero .shot .ui{font-size:.86rem}
 .fig.inline{margin-top:14px;padding:16px;box-shadow:var(--shadow-1)}
 .fig.inline .pane{display:grid}
-@media (max-width:860px){.story .figure{display:none}.step{padding-block:26px}.step:first-child{padding-top:0}}
+
+
+/* ---------- How it works: compact components + panel ---------- */
+.how{display:grid;grid-template-columns:.95fr 1.05fr;gap:28px;align-items:start}
+.hsteps{display:grid;gap:6px}
+.hstep{display:grid;grid-template-columns:30px 1fr;gap:12px;align-items:start;text-align:left;padding:12px 14px;border:1px solid transparent;border-radius:var(--r-s);background:transparent;cursor:pointer;color:var(--ink-2);transition:background .15s,border-color .15s;font:inherit}
+.hstep .n{font-family:var(--f-mono);font-size:.72rem;color:var(--ink-3);padding-top:4px}
+.hstep .t{display:grid;gap:3px}
+.hstep .t b{font-family:var(--f-display);font-weight:600;font-size:1.02rem;color:var(--ink);letter-spacing:-.01em}
+.hstep .t span{font-size:.86rem;line-height:1.45}
+.hstep:hover{background:var(--surface-2)}
+.hstep.is-active{background:var(--surface);border-color:var(--line-2);box-shadow:var(--shadow-1)}
+.hstep.is-active .n{color:var(--accent)}
+.how .figure{position:sticky;top:calc(58px + 24px + env(safe-area-inset-top,0px))}
+.how .fig{min-height:380px}
+.assure{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:22px}
+.assure>div{display:grid;gap:4px;padding:16px 18px;border:1px solid var(--line);border-radius:var(--r-s);background:var(--surface)}
+.assure b{font-weight:500;font-size:.92rem}
+.assure span{font-size:.84rem;color:var(--ink-2)}
+@media (max-width:860px){
+  .how{grid-template-columns:1fr;gap:14px}
+  .how .figure{position:relative;order:1;display:block}
+  .hsteps{display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x proximity;padding-bottom:6px;scrollbar-width:thin}
+  .hstep{flex:0 0 78%;scroll-snap-align:start;grid-template-columns:26px 1fr;background:var(--surface);border-color:var(--line)}
+  .assure{grid-template-columns:1fr}
+}
