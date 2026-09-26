@@ -2,7 +2,7 @@
 
 /* Planes: ground = body · field = glows behind screenshots · surface = white cards/UI · float = nav, pills, hero shot */
 :root{
-  --f-display:"Bricolage Grotesque","Geist",ui-sans-serif,system-ui,sans-serif;
+  --f-display:"Geist",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
   --f-body:"Geist",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
   --f-mono:"Geist Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
   --bg:#FAFAF7; --surface:#FFFFFF; --surface-2:#F4F4F1; --surface-3:#ECECE8;
