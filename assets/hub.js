@@ -453,6 +453,8 @@ return {
   counts: counts,
   titles: TITLES,
   meta: function () { return M ? M.meta : null; },
+  model: function () { return M; },
+  checklist: function () { return C; },
   parseHash: parseHash
 };
 })();

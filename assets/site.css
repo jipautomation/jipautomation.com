@@ -339,3 +339,5 @@ section[id]{scroll-margin-top:calc(58px + 12px)}
 .ui .who svg{display:none}
 .ui .side a .cnt:empty{display:none}
 .ui .main .hub{display:block}
+.phs.done{color:var(--ink-2)}
+#d-changes .kv .r{padding-bottom:9px}
