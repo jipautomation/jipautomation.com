@@ -1,0 +1,4 @@
+node_modules/
+# Plaintext hub data never enters the repo; only assets/hub/*.enc.json does.
+assets/hub/*.plain.*
+assets/hub/*.js

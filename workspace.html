@@ -13,7 +13,8 @@
 <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300..700&family=Geist+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="/assets/site.css?v=202609260518">
+<link rel="stylesheet" href="/assets/site.css?v=202609260616">
+<link rel="stylesheet" href="/assets/hub.css?v=202609260616">
 <script>try{var t=localStorage.getItem('jip-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t;}catch(e){}</script>
 </head>
 <body>
@@ -54,102 +55,102 @@
   <div class="ws" id="dash" hidden></div>
 </main>
 
-<!-- The dashboard is only stamped into the page after a successful sign-in. -->
+<!-- The workspace shell is only stamped into the page after a successful sign-in. -->
 <template id="wsTemplate">
     <div class="ui" id="dashUi">
       <aside class="side" aria-label="Workspace sections">
-        <div class="who"><i data-ws-initials></i><span data-ws-name></span><svg viewBox="0 0 24 24"><path d="M8 10l4 4 4-4"/></svg></div>
-        <a href="#d-top" class="is-active"><svg viewBox="0 0 24 24"><path d="M3 12h7V3H3zM14 21h7v-9h-7zM14 3v5h7V3zM3 16v5h7v-5z"/></svg>Dashboard</a>
-        <div class="grp">Operations</div>
-        <a href="#d-phase"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h10M4 18h6"/></svg>Projects</a>
-        <a href="#d-auto"><svg viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>Automations<span class="cnt">0</span></a>
-        <a href="#d-appr"><svg viewBox="0 0 24 24"><path d="M9 11l3 3 8-8M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg>Approvals<span class="cnt">0</span></a>
-        <div class="grp">Insight</div>
-        <a href="#d-top"><svg viewBox="0 0 24 24"><path d="M4 19V5M4 19h16M8 15v-4M12 15V8M16 15v-6"/></svg>Business impact</a>
-        <a href="#d-docs"><svg viewBox="0 0 24 24"><path d="M6 2h8l4 4v16H6zM14 2v4h4M9 13h6M9 17h6"/></svg>Documents</a>
+        <div class="who"><i data-ws-initials></i><span data-ws-name></span><span class="role" data-ws-role hidden>Admin</span></div>
+        <a href="#/dashboard" data-page="dashboard"><svg viewBox="0 0 24 24"><path d="M3 12h7V3H3zM14 21h7v-9h-7zM14 3v5h7V3zM3 16v5h7v-5z"/></svg>Dashboard</a>
+        <div class="grp">Understand</div>
+        <a href="#/home" data-page="home"><svg viewBox="0 0 24 24"><path d="M12 3l9 5-9 5-9-5zM3 13l9 5 9-5"/></svg>Build Hub</a>
+        <a href="#/map" data-page="map"><svg viewBox="0 0 24 24"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2zM9 4v14M15 6v14"/></svg>Project Map</a>
+        <a href="#/lifecycle" data-page="lifecycle"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7M21 3v6h-6"/></svg>Deal Lifecycle</a>
+        <div class="grp">Build</div>
+        <a href="#/workflows" data-page="workflows"><svg viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>Workflows<span class="cnt" data-count="workflows"></span></a>
+        <a href="#/data" data-page="data"><svg viewBox="0 0 24 24"><path d="M3 5h18v14H3zM3 10h18M9 5v14"/></svg>Data Model<span class="cnt" data-count="data"></span></a>
+        <a href="#/checklist" data-page="checklist"><svg viewBox="0 0 24 24"><path d="M9 11l3 3 8-8M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg>Checklist<span class="cnt" data-count="checklist"></span></a>
+        <a href="#/gotchas" data-page="gotchas"><svg viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>Gotchas<span class="cnt" data-count="gotchas"></span></a>
+        <div class="grp">Business</div>
+        <a href="#/people" data-page="people"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M23 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/><circle cx="9" cy="7" r="4"/></svg>People &amp; Roles</a>
+        <a href="#/glossary" data-page="glossary"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M4 19.5V4.5A2.5 2.5 0 0 1 6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5z"/></svg>Glossary<span class="cnt" data-count="glossary"></span></a>
+        <a href="#/ken" data-page="ken"><svg viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/></svg>Ken Tracker<span class="cnt" data-count="ken"></span></a>
         <div class="grp">Account</div>
-        <a href="#d-support"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>Support</a>
-        <a href="#d-settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></svg>Settings</a>
+        <a href="#/support" data-page="support"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>Support</a>
+        <a href="#/settings" data-page="settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></svg>Settings</a>
         <a href="#" class="signout" data-signout><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>Sign out</a>
       </aside>
       <div class="main">
-        <div class="top"><span class="crumb" id="d-top">Dashboard</span><span>·</span><span data-ws-name></span><span class="sp"></span><button type="button" class="btn sm" data-signout>Sign out</button></div>
-        <div class="body">
-          <div class="cockpit">
+        <div class="top"><span class="crumb" id="crumb">Dashboard</span><span>·</span><span data-ws-name></span><span class="sp"></span><button type="button" class="btn sm" data-signout>Sign out</button></div>
+        <div class="body" id="view"></div>
+        <div class="hub" id="hubView" hidden></div>
+      </div>
+    </div>
+</template>
+
+<template id="tpl-support">
+          <div class="row2">
             <div class="panel">
-              <div class="ph"><h4>Documents processed</h4><div class="ctl"><span>This month ▾</span><span>Weekly ▾</span></div></div>
-              <div class="big"><span class="v">—</span></div>
-              <p class="note">No documents processed yet.</p>
-              <div class="chart empty"><span>The chart appears once the first document goes through.</span></div>
-            </div>
-            <div class="stats">
-              <div class="stat"><span class="l">Awaiting your approval</span><span class="v">—</span><span class="l">Nothing waiting</span></div>
-              <div class="stat"><span class="l">Exceptions open</span><span class="v">—</span><span class="l">None open</span></div>
-              <div class="stat"><span class="l">Median review time</span><span class="v">—</span><span class="l">No reviews yet</span></div>
-              <div class="stat"><span class="l">Header fields accepted unchanged</span><span class="v">—</span><span class="l">No data yet</span></div>
-            </div>
-          </div>
-
-          <div class="panel" id="d-phase">
-            <div class="ph"><h4>Project</h4><span style="font-size:.78rem;color:var(--ink-2)">No phase in progress</span></div>
-            <div class="phases">
-              <div class="phs"><i></i>Phase 1<small>Not started</small></div>
-              <div class="phs"><i></i>Phase 2<small>Not started</small></div>
-              <div class="phs"><i></i>Phase 3<small>Not started</small></div>
-              <div class="phs"><i></i>Phase 4<small>Not started</small></div>
-            </div>
-          </div>
-
-          <div class="row2">
-            <div class="panel" id="d-appr">
-              <div class="ph"><h4>Approvals</h4><span style="font-size:.78rem;color:var(--ink-2)">Open queue</span></div>
-              <div class="empty">No approvals waiting.</div>
-              <div class="ph" style="margin-top:4px"><h4>Exceptions</h4></div>
-              <div class="empty">No open exceptions.</div>
-            </div>
-            <div class="panel" id="d-auto">
-              <div class="ph"><h4>Automations</h4><span style="font-size:.78rem;color:var(--ink-2)">0 workflows</span></div>
-              <div class="empty">No automations configured yet.</div>
-            </div>
-          </div>
-
-          <div class="row2">
-            <div class="panel" id="d-docs">
-              <div class="ph"><h4>Documents</h4><span style="font-size:.78rem;color:var(--ink-2)">Recent</span></div>
-              <div class="empty">No documents yet.</div>
-            </div>
-            <div class="panel" id="d-support">
-              <div class="ph"><h4>Support &amp; plan</h4><span class="pill planned">No plan</span></div>
+              <div class="ph"><h4>Get in touch</h4><span class="pill run">One business day</span></div>
+              <p class="note" style="margin:0">One reply, from Carson. Say what you need and roughly how urgent it is.</p>
               <div class="kv">
-                <div class="r"><span>Break-fix response</span><b>—</b></div>
+                <div class="r"><span>Email</span><b>carson@jipautomation.com</b></div>
+                <div class="r" style="border:0"><span>Break-fix response</span><b>Within 1 business day</b></div>
+              </div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <a class="btn sm primary" href="mailto:carson@jipautomation.com?subject=Change%20request%20%C2%B7%20workspace">Request a change</a>
+                <a class="btn sm" href="mailto:carson@jipautomation.com?subject=Problem%20report%20%C2%B7%20workspace">Report a problem</a>
+              </div>
+            </div>
+            <div class="panel">
+              <div class="ph"><h4>Your plan</h4><span class="pill planned">No plan yet</span></div>
+              <div class="kv">
                 <div class="r"><span>Monitoring</span><b>—</b></div>
                 <div class="r"><span>Change hours</span><b>—</b></div>
+                <div class="r" style="border:0"><span>Monthly health note</span><b>—</b></div>
               </div>
               <div class="hours" aria-hidden="true"><i style="width:0"></i></div>
-              <div style="display:flex;gap:8px;flex-wrap:wrap"><span class="btn sm">Request a change</span><span class="btn sm">Report a problem</span></div>
             </div>
           </div>
+          <div class="panel">
+            <div class="ph"><h4>Recent requests</h4></div>
+            <div class="empty">No requests yet.</div>
+          </div>
+</template>
 
-          <div class="panel" id="d-settings">
-            <div class="ph"><h4>Settings</h4></div>
+<template id="tpl-settings">
+          <div class="panel">
+            <div class="ph"><h4>Appearance</h4></div>
             <div class="kv">
-              <div class="r" style="align-items:center"><span>Appearance</span>
+              <div class="r" style="border:0;align-items:center"><span>Theme</span>
                 <div class="seg" role="group" aria-label="Appearance">
                   <button type="button" data-theme-pick="light">Light</button>
                   <button type="button" data-theme-pick="dark">Dark</button>
                   <button type="button" data-theme-pick="system">System</button>
                 </div>
               </div>
-              <div class="r"><span>Reviewers</span><b>—</b></div>
-              <div class="r"><span>Review emails from</span><b>—</b></div>
-              <div class="r"><span>Exception owner</span><b>—</b></div>
-              <div class="r" style="border:0"><span>Data export</span><b>—</b></div>
             </div>
           </div>
-        </div>
-      </div>
-    </div>
+          <div class="row2">
+            <div class="panel">
+              <div class="ph"><h4>Account</h4></div>
+              <div class="kv">
+                <div class="r"><span>Username</span><b data-ws-user></b></div>
+                <div class="r"><span>Workspace</span><b data-ws-name></b></div>
+                <div class="r" style="border:0"><span>Role</span><b data-ws-rolename></b></div>
+              </div>
+              <div><button type="button" class="btn sm" data-signout>Sign out</button></div>
+            </div>
+            <div class="panel">
+              <div class="ph"><h4>Workspace</h4></div>
+              <div class="kv">
+                <div class="r"><span>Reviewers</span><b>—</b></div>
+                <div class="r"><span>Review emails from</span><b>—</b></div>
+                <div class="r"><span>Exception owner</span><b>—</b></div>
+                <div class="r" style="border:0"><span>Data export</span><b>—</b></div>
+              </div>
+            </div>
+          </div>
 </template>
-<script src="/assets/site.js?v=202609260518"></script>
+<script src="/assets/site.js?v=202609260616"></script>
 </body>
 </html>

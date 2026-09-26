@@ -332,3 +332,12 @@ section[id]{scroll-margin-top:calc(58px + 12px)}
 .ui .side a.signout{margin-top:8px;color:var(--ink-3)}
 .ui .side a.signout:hover{color:var(--bad)}
 .ui .top .btn{margin-left:8px}
+
+/* ---------- Workspace: sidebar, roles ---------- */
+.ws .ui .side{overflow-y:auto;scrollbar-width:thin}
+.ui .who .role{margin-left:auto;font-family:var(--f-mono);font-size:.62rem;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);background:var(--accent-soft);padding:2px 6px;border-radius:5px}
+.ui .who svg{display:none}
+.ui .side a .cnt:empty{display:none}
+.ui .main .hub{display:block}
+.phs.done{color:var(--ink-2)}
+#d-changes .kv .r{padding-bottom:9px}
