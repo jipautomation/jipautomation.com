@@ -26,12 +26,30 @@
   /* pinned story */
   const fig=$('#fig'), st=$('#figState'), cap=$('#figCap');
   if(fig){
-  const states={1:['Received','Fictional document. Real ones are yours, and stay yours.'],2:['Read','Every field extracted, scans included.'],3:['Checked','Lines sum to the total. Supplier and customer matched.'],4:['Awaiting approval','One email, every field pre-filled.'],5:['Filed','Linked record, traceable to the review.']};
-  const steps=$$('.step');
-  if('IntersectionObserver' in window){
-    const io=new IntersectionObserver(es=>{ es.forEach(e=>{ if(e.isIntersecting){ const n=e.target.dataset.step; fig.dataset.state=n; st.textContent=states[n][0]; cap.textContent=states[n][1]; steps.forEach(x=>x.classList.toggle('is-active',x===e.target)); } }); },{rootMargin:'-45% 0px -45% 0px',threshold:0});
+  const states={1:['Intake','Logged','Three documents arrived this morning. Each is logged and classified before anything else happens.'],2:['Extraction','Read','Every field carries a confidence score. Low scores are flagged for the reviewer.'],3:['Checks','Checked','Four checks passed, one item flagged for the reviewer. Nothing has been written yet.'],4:['Approval','Waiting on a person','One email, every field pre-filled. That click is the only way a row is created.'],5:['Output','Filed and generated','The record, the paperwork built from it, and a digest that says it all ran.']};
+  const steps=$$('.step'), tag=$('#figTag'), no=$('#figNo');
+  /* narrow screens: no pinned panel; each step carries its own copy of the pane */
+  if(matchMedia('(max-width:860px)').matches){ steps.forEach(x=>{ const n=x.dataset.step, pane=$('.pane[data-pane="'+n+'"]',fig); if(!pane)return; const box=document.createElement('div'); box.className='fig inline'; box.innerHTML='<div class="head"><span class="file"><i>'+n+'/5</i>'+states[n][0]+'</span><span class="state">'+states[n][1]+'</span></div>'; box.appendChild(pane.cloneNode(true)); x.appendChild(box); }); }
+  else if('IntersectionObserver' in window){
+    const io=new IntersectionObserver(es=>{ es.forEach(e=>{ if(e.isIntersecting){ const n=e.target.dataset.step; fig.dataset.state=n; st.textContent=states[n][0]; if(tag)tag.textContent=states[n][1]; if(no)no.textContent=n+'/5'; cap.textContent=states[n][2]; steps.forEach(x=>x.classList.toggle('is-active',x===e.target)); } }); },{rootMargin:'-45% 0px -45% 0px',threshold:0});
     steps.forEach(x=>io.observe(x));
   }}
+
+  /* nav: highlight the section in view (orientation) */
+  const navLinks=$$('#navlinks a[href^="#"]');
+  if(navLinks.length&&'IntersectionObserver' in window){
+    const secs=navLinks.map(a=>document.getElementById(a.getAttribute('href').slice(1))).filter(Boolean);
+    const nio=new IntersectionObserver(es=>{ es.forEach(e=>{ if(e.isIntersecting){ navLinks.forEach(a=>a.classList.toggle('is-active',a.getAttribute('href')==='#'+e.target.id)); } }); },{rootMargin:'-40% 0px -55% 0px',threshold:0});
+    secs.forEach(s=>nio.observe(s));
+  }
+
+  /* numbers count up once on entry (emphasis); the final value is already in the HTML */
+  const counters=$$('[data-count]');
+  if(counters.length&&'IntersectionObserver' in window&&!matchMedia('(prefers-reduced-motion: reduce)').matches){
+    const cio=new IntersectionObserver(es=>{ es.forEach(e=>{ if(!e.isIntersecting)return; cio.unobserve(e.target); const el=e.target, end=+el.dataset.count, t0=performance.now(), dur=850;
+      const tick=t=>{ const p=Math.min(1,(t-t0)/dur), v=Math.round(end*(1-Math.pow(1-p,3))); el.textContent=String(v); if(p<1)requestAnimationFrame(tick); else el.textContent=String(end); }; requestAnimationFrame(tick); }); },{threshold:0.5});
+    counters.forEach(c=>cio.observe(c));
+  }
 
   /* contact form: posts to the n8n webhook when one is configured (data-endpoint), otherwise shows the sent state */
   if($('#lead')) $('#lead').addEventListener('submit',async e=>{e.preventDefault();const f=e.target;
