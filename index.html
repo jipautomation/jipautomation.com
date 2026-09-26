@@ -12,7 +12,7 @@
 <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Geist+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="/assets/site.css?v=202609260835">
+<link rel="stylesheet" href="/assets/site.css?v=202609260839">
 <script>try{var t=localStorage.getItem('jip-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t;}catch(e){}document.documentElement.classList.add('js');</script>
 </head>
 <body>
@@ -60,26 +60,26 @@
     </div>
   </section>
 
-  <!-- how it works: five building blocks, pinned explainer -->
+  <!-- how it works: five components, one screen -->
   <section class="sec" id="how">
     <div class="wrap">
       <div class="sec-head">
         <span class="tag"><svg viewBox="0 0 24 24"><path d="M4 12h16M14 6l6 6-6 6"/></svg>How it works</span>
-        <h2 class="h-section">Five building blocks.<br><span class="muted">One of them is a person.</span></h2>
-        <p class="sub">Every automation I build is assembled from the same five parts, whatever the document or the industry. Scroll through them and the panel shows each one at work.</p>
+        <h2 class="h-section">Documents in. Records out.<br><span class="muted">Nothing written without your approval.</span></h2>
+        <p class="sub">Every system is built from the same five components, proven in production. They are why a client can trust the numbers from the first day.</p>
       </div>
-      <div class="story">
-        <div class="steps" id="steps">
-          <div class="step" data-step="1"><span class="n">1 / 5</span><h3>Intake</h3><p>Documents arrive where they already do: a shared folder, a mailbox, an upload form. Each one is logged and classified before anything else happens, so nothing is lost and nothing is handled twice.</p></div>
-          <div class="step" data-step="2"><span class="n">2 / 5</span><h3>Extraction</h3><p>Claude reads the document itself, scans and photos included. Header fields and every line item become structured data, with a confidence score on each field.</p></div>
-          <div class="step" data-step="3"><span class="n">3 / 5</span><h3>Checks</h3><p>Totals must add up. Names must match your master data. Duplicates are caught. Anything that fails a check goes to an exceptions list with the reason, not into your books.</p></div>
-          <div class="step" data-step="4"><span class="n">4 / 5</span><h3>Approval</h3><p>A person on your team sees every field before anything is written, pre-filled and one click from done. That click is the only way a record is created.</p></div>
-          <div class="step" data-step="5"><span class="n">5 / 5</span><h3>Output</h3><p>The record files itself. The paperwork that used to be typed from it, notices, schedules, confirmations, signature packets, is generated from the record instead. A daily digest tells you it all ran.</p></div>
+      <div class="how">
+        <div class="hsteps" id="steps" role="tablist" aria-label="Components">
+          <button class="hstep is-active" type="button" role="tab" data-step="1" aria-selected="true"><span class="n">01</span><span class="t"><b>Capture</b><span>Picked up where documents already arrive. Logged and classified in seconds.</span></span></button>
+          <button class="hstep" type="button" role="tab" data-step="2" aria-selected="false"><span class="n">02</span><span class="t"><b>Read</b><span>Every header field and line item extracted, scans included, each with a confidence score.</span></span></button>
+          <button class="hstep" type="button" role="tab" data-step="3" aria-selected="false"><span class="n">03</span><span class="t"><b>Verify</b><span>Totals reconcile, names match your master data, duplicates are stopped. Failures go to an exceptions list, never your books.</span></span></button>
+          <button class="hstep" type="button" role="tab" data-step="4" aria-selected="false"><span class="n">04</span><span class="t"><b>Approve</b><span>Your reviewer sees every field pre-filled and approves in one click. That click is the only way a record is written.</span></span></button>
+          <button class="hstep" type="button" role="tab" data-step="5" aria-selected="false"><span class="n">05</span><span class="t"><b>Deliver</b><span>The record files itself and the downstream paperwork is generated from it. A daily digest confirms it all ran.</span></span></button>
         </div>
         <div class="figure">
           <div class="glow small" aria-hidden="true"></div>
-          <div class="fig" id="fig" data-state="1">
-            <div class="head"><span class="file"><i id="figNo">1/5</i><span id="figState">Intake</span></span><span class="state" id="figTag">Logged</span></div>
+          <div class="fig" id="fig" data-state="1" role="tabpanel">
+            <div class="head"><span class="file"><i id="figNo">1/5</i><span id="figState">Capture</span></span><span class="state" id="figTag">Logged</span></div>
             <div class="track" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
             <div class="pane" data-pane="1">
               <div class="tbl">
@@ -126,6 +126,11 @@
             <p class="caption" id="figCap">Fictional documents. Real ones are yours, and stay yours.</p>
           </div>
         </div>
+      </div>
+      <div class="assure" data-reveal>
+        <div><b>No record without approval</b><span>A person clicks before anything is written. Always.</span></div>
+        <div><b>Every exception, with a reason</b><span>Nothing fails silently. Each one is logged and routed to the right person.</span></div>
+        <div><b>One digest, every morning</b><span>What ran, what waited, what needs you. No news means all clear.</span></div>
       </div>
     </div>
   </section>
@@ -359,6 +364,6 @@
           </div>
         </div>
       </div></div></template>
-<script src="/assets/site.js?v=202609260835"></script>
+<script src="/assets/site.js?v=202609260839"></script>
 </body>
 </html>

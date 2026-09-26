@@ -23,16 +23,18 @@
   fitHero(); addEventListener('resize',fitHero);
   drawChart($('.chart',hero)); }
 
-  /* pinned story */
+  /* how it works: five components as tabs; advances on its own until someone chooses */
   const fig=$('#fig'), st=$('#figState'), cap=$('#figCap');
   if(fig){
-  const states={1:['Intake','Logged','Three documents arrived this morning. Each is logged and classified before anything else happens.'],2:['Extraction','Read','Every field carries a confidence score. Low scores are flagged for the reviewer.'],3:['Checks','Checked','Four checks passed, one item flagged for the reviewer. Nothing has been written yet.'],4:['Approval','Waiting on a person','One email, every field pre-filled. That click is the only way a row is created.'],5:['Output','Filed and generated','The record, the paperwork built from it, and a digest that says it all ran.']};
-  const steps=$$('.step'), tag=$('#figTag'), no=$('#figNo');
-  /* narrow screens: no pinned panel; each step carries its own copy of the pane */
-  if(matchMedia('(max-width:860px)').matches){ steps.forEach(x=>{ const n=x.dataset.step, pane=$('.pane[data-pane="'+n+'"]',fig); if(!pane)return; const box=document.createElement('div'); box.className='fig inline'; box.innerHTML='<div class="head"><span class="file"><i>'+n+'/5</i>'+states[n][0]+'</span><span class="state">'+states[n][1]+'</span></div>'; box.appendChild(pane.cloneNode(true)); x.appendChild(box); }); }
-  else if('IntersectionObserver' in window){
-    const io=new IntersectionObserver(es=>{ es.forEach(e=>{ if(e.isIntersecting){ const n=e.target.dataset.step; fig.dataset.state=n; st.textContent=states[n][0]; if(tag)tag.textContent=states[n][1]; if(no)no.textContent=n+'/5'; cap.textContent=states[n][2]; steps.forEach(x=>x.classList.toggle('is-active',x===e.target)); } }); },{rootMargin:'-45% 0px -45% 0px',threshold:0});
-    steps.forEach(x=>io.observe(x));
+  const states={1:['Capture','Logged','Three documents arrived this morning. Each is logged and classified before anything else happens.'],2:['Read','Extracted','Every field carries a confidence score. Low scores are flagged for the reviewer.'],3:['Verify','Checked','Four checks passed, one item flagged for the reviewer. Nothing has been written yet.'],4:['Approve','Waiting on a person','One email, every field pre-filled. That click is the only way a row is created.'],5:['Deliver','Filed and generated','The record, the paperwork built from it, and a digest that says it all ran.']};
+  const steps=$$('.hstep'), tag=$('#figTag'), no=$('#figNo'); let cur=1, timer=null;
+  const show=n=>{ cur=n; fig.dataset.state=n; st.textContent=states[n][0]; if(tag)tag.textContent=states[n][1]; if(no)no.textContent=n+'/5'; cap.textContent=states[n][2]; steps.forEach(x=>{ const on=+x.dataset.step===n; x.classList.toggle('is-active',on); x.setAttribute('aria-selected',String(on)); }); };
+  const stop=()=>{ if(timer){clearInterval(timer);timer=null;} };
+  steps.forEach(x=>{ x.addEventListener('click',()=>{ stop(); how.dataset.done='1'; show(+x.dataset.step); }); x.addEventListener('keydown',e=>{ if(e.key==='ArrowDown'||e.key==='ArrowRight'){e.preventDefault();stop();how.dataset.done='1';show(cur%5+1);steps[cur-1].focus();} if(e.key==='ArrowUp'||e.key==='ArrowLeft'){e.preventDefault();stop();how.dataset.done='1';show((cur+3)%5+1);steps[cur-1].focus();} }); });
+  const how=$('#how');
+  if(!matchMedia('(prefers-reduced-motion: reduce)').matches&&'IntersectionObserver' in window){
+    const hio=new IntersectionObserver(es=>{ es.forEach(e=>{ if(e.isIntersecting&&!timer&&!how.dataset.done){ timer=setInterval(()=>{ show(cur%5+1); if(cur===5){stop();how.dataset.done='1';} },3200); } else if(!e.isIntersecting){ stop(); } }); },{threshold:0.4});
+    hio.observe(how);
   }}
 
   /* nav: highlight the section in view (orientation) */
