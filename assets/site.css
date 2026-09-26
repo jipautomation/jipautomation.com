@@ -78,8 +78,7 @@ img{max-width:100%}
 @supports not (backdrop-filter:blur(1px)){.nav{background:var(--bg)}}
 .nav .wrap{display:flex;align-items:center;justify-content:space-between;height:58px;gap:16px}
 .brand{display:flex;align-items:center;gap:9px;text-decoration:none;font-weight:600;font-size:.98rem;letter-spacing:-.01em}
-.brand .mark{width:24px;height:24px;border-radius:7px;background:var(--ink);position:relative;flex:none}
-.brand .mark::after{content:"";position:absolute;inset:6px 6px 6px 10px;border-radius:2px;background:var(--bg);clip-path:polygon(0 0,100% 0,100% 100%,55% 100%,55% 42%,0 42%)}
+.brand .mark{width:24px;height:24px;flex:none;color:var(--ink);display:block}
 .nav ul{list-style:none;display:flex;gap:4px;margin:0;padding:0;font-size:.9rem}
 .nav ul a{text-decoration:none;color:var(--ink-2);padding:7px 10px;border-radius:var(--r-xs)}
 .nav ul a:hover{color:var(--ink);background:var(--surface-2)}
@@ -379,3 +378,25 @@ section[id]{scroll-margin-top:calc(58px + 12px)}
 }
 @media (prefers-reduced-motion:reduce){.ws .ui .side{transition:none}}
 #engagement .kv .r>span{flex:none}
+
+/* ---------- Brand flow field: the hand-drawn lines, as a vector, masked onto the ink colour ---------- */
+.flow{position:absolute;inset:0;pointer-events:none;background:var(--ink);opacity:.085;z-index:0;
+  -webkit-mask-image:url(/assets/brand/flow.svg?v=202609260756);mask-image:url(/assets/brand/flow.svg?v=202609260756);
+  -webkit-mask-size:960px 688px;mask-size:960px 688px;-webkit-mask-repeat:repeat;mask-repeat:repeat;-webkit-mask-position:center top;mask-position:center top}
+.hero{position:relative;isolation:isolate}
+.hero>.wrap{position:relative;z-index:1}
+.hero .flow{opacity:.06;
+  -webkit-mask-image:url(/assets/brand/flow.svg?v=202609260756),radial-gradient(70% 62% at 50% 34%,#000 20%,transparent 100%);mask-image:url(/assets/brand/flow.svg?v=202609260756),radial-gradient(70% 62% at 50% 34%,#000 20%,transparent 100%);
+  -webkit-mask-size:960px 688px,100% 100%;mask-size:960px 688px,100% 100%;-webkit-mask-repeat:repeat,no-repeat;mask-repeat:repeat,no-repeat;
+  -webkit-mask-composite:source-in;mask-composite:intersect}
+.flow-band{position:relative;height:150px;overflow:hidden;isolation:isolate}
+.flow-band .flow{opacity:.13;
+  -webkit-mask-image:url(/assets/brand/flow.svg?v=202609260756),linear-gradient(to bottom,transparent,#000 35%,#000 65%,transparent);mask-image:url(/assets/brand/flow.svg?v=202609260756),linear-gradient(to bottom,transparent,#000 35%,#000 65%,transparent);
+  -webkit-mask-size:960px 688px,100% 100%;mask-size:960px 688px,100% 100%;-webkit-mask-repeat:repeat,no-repeat;mask-repeat:repeat,no-repeat;-webkit-mask-position:center,center;mask-position:center,center;
+  -webkit-mask-composite:source-in;mask-composite:intersect}
+.ws-signin .flow{opacity:.06;
+  -webkit-mask-image:url(/assets/brand/flow.svg?v=202609260756),radial-gradient(60% 60% at 50% 50%,#000 10%,transparent 100%);mask-image:url(/assets/brand/flow.svg?v=202609260756),radial-gradient(60% 60% at 50% 50%,#000 10%,transparent 100%);
+  -webkit-mask-size:960px 688px,100% 100%;mask-size:960px 688px,100% 100%;-webkit-mask-repeat:repeat,no-repeat;mask-repeat:repeat,no-repeat;
+  -webkit-mask-composite:source-in;mask-composite:intersect}
+.ws-signin .signin{z-index:1}
+@media (max-width:700px){.flow-band{height:100px}.hero .flow{opacity:.045}.ws-signin .flow{opacity:.045}.flow,.hero .flow,.flow-band .flow,.ws-signin .flow{-webkit-mask-size:640px 459px,100% 100%;mask-size:640px 459px,100% 100%}}
