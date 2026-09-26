@@ -26,9 +26,12 @@ var Store = {
   keys: ["checklist", "ken", "notes"],
   init: function () {
     var self = this;
+    var seed = String(H.seed_version || "");
+    try { if (localStorage.getItem("hub.seed") !== seed) { this.keys.forEach(function (k) { localStorage.removeItem("hub." + k); }); localStorage.setItem("hub.seed", seed); } } catch (e) { }
+    this.state = { checklist: null, ken: null, notes: null };
     this.keys.forEach(function (k) { try { var v = localStorage.getItem("hub." + k); if (v) self.state[k] = JSON.parse(v); } catch (e) { } });
     if (!this.state.checklist) this.state.checklist = { done: C.done.slice() };
-    if (!this.state.ken) this.state.ken = { items: {} };
+    if (!this.state.ken) this.state.ken = { items: Object.assign({}, (M.ken_tracker.state || {}).items || {}) };
     if (!this.state.notes) this.state.notes = { entries: [] };
     if (window.claude && window.claude.use) {
       window.claude.use("db").then(function (db) {
@@ -454,6 +457,7 @@ return {
   titles: TITLES,
   meta: function () { return M ? M.meta : null; },
   model: function () { return M; },
+  state: function () { return Store.state; },
   checklist: function () { return C; },
   parseHash: parseHash
 };

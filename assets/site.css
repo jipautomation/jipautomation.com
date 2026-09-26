@@ -341,3 +341,10 @@ section[id]{scroll-margin-top:calc(58px + 12px)}
 .ui .main .hub{display:block}
 .phs.done{color:var(--ink-2)}
 #d-changes .kv .r{padding-bottom:9px}
+/* dashboard progress bars */
+.bars{display:grid;gap:7px;margin-top:4px}
+.bars .bar{display:grid;grid-template-columns:minmax(0,1fr) 140px 44px;gap:10px;align-items:center;font-size:.78rem;color:var(--ink-2)}
+.bars .bl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bars .bt{height:6px;border-radius:3px;background:var(--line-2);overflow:hidden}.bars .bt i{display:block;height:100%;background:var(--accent);border-radius:3px}
+.bars .bn{font-family:var(--f-mono);font-size:.72rem;text-align:right;font-variant-numeric:tabular-nums}
+@media (max-width:600px){.bars .bar{grid-template-columns:minmax(0,1fr) 90px 40px}}
