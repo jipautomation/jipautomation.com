@@ -68,7 +68,7 @@
      that unwraps the workspace's hub data (assets/hub/<hub>.enc.json), so the hub content
      is only readable after a valid sign-in. */
   const USERS={
-    legacy:{name:'Legacy',initials:'LG',salt:'7b0712fc61da3a10e5760e5458db6f74',hash:'f52f2e050e130b9645ce603b2b9e6cdc750a087ae45a6a7de173f5d955a22236',hub:'legacy'},
+    legacy:{name:'Legacy',initials:'LG',salt:'dfbfb4b3df30b249ba08932f9b728c1f',hash:'2d96cf413653194b7ea39c67d182643e157a59252b6f3ba10cf64ec2a00b91e7',hub:'legacy'},
     carson:{name:'Carson',initials:'CJ',salt:'22c9a7bd37020c99d7dbbb88f2caa07b',hash:'9014fdc795a34fdffdcc1899015a27c4d1970bd9afb00ed9a3cb518a6e7a2a7b',hub:null,admin:true}
   };
   const ITER=200000, SESSION='jip-ws-user', SESSION_KEY='jip-ws-key';
