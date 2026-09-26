@@ -68,6 +68,9 @@
   /* workspace shell: dashboard, support and settings are the workspace's own pages;
      everything else in the sidebar is a Build Hub page rendered by assets/hub.js. */
   const WS_PAGES={dashboard:'Dashboard',metrics:'Metrics',support:'Support',settings:'Settings'};
+  const ADMIN_PAGES={home:1,checklist:1,gotchas:1};
+  function closeMenu(){ const sd=$('#side'), b=$('#menuBtn'); if(sd)sd.classList.remove('open'); if(b)b.setAttribute('aria-expanded','false'); const sc=$('.scrim'); if(sc)sc.remove(); }
+  function openMenu(){ const sd=$('#side'), b=$('#menuBtn'); if(!sd)return; sd.classList.add('open'); if(b)b.setAttribute('aria-expanded','true'); const sc=document.createElement('div'); sc.className='scrim'; sc.addEventListener('click',closeMenu); document.body.appendChild(sc); }
   let wsUser=null, hubState='none';
   function loadScript(src){ return new Promise((res,rej)=>{ const s=document.createElement('script'); s.src=src; s.onload=res; s.onerror=()=>rej(new Error('failed '+src)); document.head.appendChild(s); }); }
   function fillUser(root,u){ const user=USERS[u];
@@ -75,7 +78,8 @@
     $$('[data-ws-user]',root).forEach(el=>el.textContent=u); $$('[data-ws-rolename]',root).forEach(el=>el.textContent=user.admin?'Admin':'Client');
     $$('[data-ws-role]',root).forEach(el=>el.hidden=!user.admin);
     $$('[data-theme-pick]',root).forEach(b=>{b.setAttribute('aria-pressed',String(b.dataset.themePick===current()));b.addEventListener('click',()=>applyTheme(b.dataset.themePick));});
-    $$('[data-signout]',root).forEach(b=>b.addEventListener('click',e=>{e.preventDefault();signOut();})); }
+    $$('[data-signout]',root).forEach(b=>b.addEventListener('click',e=>{e.preventDefault();signOut();}));
+    const mb=$('#menuBtn',root); if(mb)mb.addEventListener('click',()=>{ $('#side').classList.contains('open')?closeMenu():openMenu(); }); }
   function parseRoute(){ const h=(location.hash||'').replace(/^#\/?/,''); return h.split(/[/?]/)[0]||''; }
   function setActive(page){ $$('#dashUi .side a[data-page]').forEach(a=>a.classList.toggle('is-active',a.dataset.page===page)); }
   function refreshCounts(){ if(!(window.JipHub&&JipHub.ready()))return; const c=JipHub.counts(); $$('#dashUi [data-count]').forEach(el=>{ const v=c[el.dataset.count]; el.textContent=v==null?'':String(v); }); }
@@ -90,7 +94,7 @@
       automations:[],automationsNote:'0 workflows',automationsEmpty:'No automations configured yet.',
       tables:[],tablesNote:'0 tables',tablesEmpty:'No tables yet.',
       impact:[['Documents in scope','—'],['Hours returned','—'],['Rows written without a person approving','—']],
-      docs:[],docsEmpty:'No documents yet.', changes:[],changesEmpty:'No activity yet.' };
+      docs:[],docsEmpty:'Documents will appear here once the pipeline files them.', changes:[],changesEmpty:'No activity yet.' };
     if(!(user.hub&&window.JipHub&&JipHub.ready()))return d;
     const M=JipHub.model(), C=JipHub.checklist(), c=JipHub.counts(), meta=M.meta||{};
     const done=(JipHub.state().checklist||{}).done||C.done||[], kenSt=(JipHub.state().ken||{}).items||{};
@@ -127,7 +131,6 @@
     d.tablesNote=tbLive+' live of '+tb.length;
     const lib=M.nodes.filter(n=>n.id==='src_sharepoint')[0];
     d.impact=[['Sales orders in the SharePoint library',lib&&/(\d+) PDFs/.test(lib.sub)?RegExp.$1:'481'],['Orders retyped by hand, Jan–Aug 2026','481'],['Gotchas caught and written down',String(M.gotchas.length)],['Rows written without a person approving','0']];
-    d.docsEmpty='Deal documents and the archive are kept on the private Build Hub.';
     d.changes=(M.status.changes||[]).slice(0,6);
     return d; }
   function dashboardHtml(u){ const d=dashData(u);
@@ -212,11 +215,16 @@
       +'<div><b>Straight-through rate</b><span>documents approved with zero field changes ÷ documents approved</span></div>'
       +'<div><b>Payback</b><span>build cost ÷ average monthly net value</span></div>'
       +'</div></div>'; }
+  function fillEngagement(root){ const card=$('#engagement',root); if(!card)return; if(!(window.JipHub&&JipHub.ready())){ card.hidden=true; return; }
+    const M=JipHub.model(), C=JipHub.checklist(), done=(JipHub.state().checklist||{}).done||[]; let t=0,d=0; C.sections.forEach(s=>{ if(String(s.phase||2)!=='2')return; s.items.forEach(it=>{t++; if(done.indexOf(it.id)>=0)d++;}); });
+    $('[data-eng-phase]',card).textContent=(M.meta.phase||'').split(' — ')[0]||'In progress'; $('[data-eng-progress]',card).textContent=(t?Math.round(d/t*100):0)+'% · '+d+' of '+t+' items'; $('[data-eng-gate]',card).textContent=(M.status.next&&M.status.next.title)||'—'; $('[data-eng-updated]',card).textContent=M.meta.updated||'—'; card.hidden=false; }
   function hubMessage(title,text){ return '<div class="page"><h1>'+title+'</h1><p class="muted">'+text+'</p></div>'; }
   function wsRoute(){ const dash=$('#dash'); if(!wsUser||dash.hidden)return;
     let page=parseRoute(); const view=$('#view'), hubEl=$('#hubView'), crumb=$('#crumb');
     if(!page){ history.replaceState(null,'','#/dashboard'); page='dashboard'; }
-    if(WS_PAGES[page]){ hubEl.hidden=true; view.hidden=false; view.innerHTML= page==='dashboard' ? dashboardHtml(wsUser) : page==='metrics' ? metricsHtml(wsUser) : $('#tpl-'+page).innerHTML; fillUser(view,wsUser); crumb.textContent=WS_PAGES[page]; window.scrollTo(0,0); }
+    if(ADMIN_PAGES[page]&&!USERS[wsUser].admin){ location.replace('#/dashboard'); return; }
+    closeMenu();
+    if(WS_PAGES[page]){ hubEl.hidden=true; view.hidden=false; view.innerHTML= page==='dashboard' ? dashboardHtml(wsUser) : page==='metrics' ? metricsHtml(wsUser) : $('#tpl-'+page).innerHTML; fillUser(view,wsUser); if(page==='support')fillEngagement(view); crumb.textContent=WS_PAGES[page]; window.scrollTo(0,0); }
     else if(window.JipHub&&JipHub.ready()&&JipHub.has(page)){ view.hidden=true; hubEl.hidden=false; JipHub.render(); crumb.textContent=JipHub.titles[page]||'Build Hub'; }
     else if(hubState==='ready'){ location.replace('#/dashboard'); return; }
     else { view.hidden=true; hubEl.hidden=false; crumb.textContent='Build Hub';
@@ -229,10 +237,10 @@
     $('#signinWrap').hidden=true; dash.hidden=false;
     hubState=user.hub?'loading':'none'; wsRoute();
     if(user.hub){ try{ const q=ASSET_V?'?v='+ASSET_V:''; const opened=await openHub(user.hub,u,kek,dkRaw); if(!window.JipHub)await loadScript('/assets/hub.js'+q);
-        JipHub.init(opened.data,{main:$('#hubView'),onRender:()=>{refreshCounts();}}); hubState='ready'; try{sessionStorage.setItem(SESSION_KEY,b64e(opened.dk))}catch(e){} refreshCounts(); }
+        JipHub.init(opened.data,{main:$('#hubView'),admin:!!user.admin,onRender:()=>{refreshCounts();}}); hubState='ready'; try{sessionStorage.setItem(SESSION_KEY,b64e(opened.dk))}catch(e){} refreshCounts(); }
       catch(e){ hubState='error'; }
       if(!WS_PAGES[parseRoute()]||parseRoute()==='dashboard')wsRoute(); } }
-  function signOut(){ try{sessionStorage.removeItem(SESSION);sessionStorage.removeItem(SESSION_KEY)}catch(e){} wsUser=null; hubState='none'; $('#dash').hidden=true; $('#dash').innerHTML=''; $('#signinWrap').hidden=false; history.replaceState(null,'',location.pathname); const f=$('#signin'); f.reset(); $('#s-user').focus(); }
+  function signOut(){ closeMenu(); try{sessionStorage.removeItem(SESSION);sessionStorage.removeItem(SESSION_KEY)}catch(e){} wsUser=null; hubState='none'; $('#dash').hidden=true; $('#dash').innerHTML=''; $('#signinWrap').hidden=false; history.replaceState(null,'',location.pathname); const f=$('#signin'); f.reset(); $('#s-user').focus(); }
   if($('#signin')){
     let saved=null, savedKey=null; try{saved=sessionStorage.getItem(SESSION);savedKey=sessionStorage.getItem(SESSION_KEY)}catch(e){}
     if(saved&&USERS[saved]) mountDash(saved,null,savedKey?b64d(savedKey):null);

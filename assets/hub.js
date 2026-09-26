@@ -3,7 +3,7 @@
 window.JipHub = (function () {
 "use strict";
 var H = null, M = null, C = null, DOCS = null, NODE = {};
-var OPTS = { main: null, onRender: null };
+var OPTS = { main: null, onRender: null, admin: false };
 var $ = function (s, r) { return (r || document).querySelector(s); };
 var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
 function esc(s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
@@ -127,7 +127,7 @@ function counts() {
   return { workflows: M.nodes.filter(function (n) { return n.kind === "workflow"; }).length, data: M.nodes.filter(function (n) { return n.kind === "table"; }).length, ken: kenOpen, archive: M.docs.length, gotchas: M.gotchas.length, glossary: M.glossary.length, checklist: d + "/" + t };
 }
 function clientName() { return (M && M.meta && (M.meta.client_short || (M.meta.org || "").split(" · ")[0])) || "the client"; }
-var TITLES = { home: "Build Hub", map: "Project Map", lifecycle: "Deal Lifecycle", workflows: "Workflows", data: "Data Model", checklist: "Checklist", gotchas: "Gotchas", people: "People & Roles", glossary: "Glossary", ken: "Inputs Needed" };
+var TITLES = { home: "Build notes", map: "Project Map", lifecycle: "Deal Lifecycle", workflows: "Workflows", data: "Data Model", checklist: "Checklist", gotchas: "Gotchas", people: "People & Roles", glossary: "Glossary", ken: "Inputs Needed" };
 
 /* ---------------- pages ---------------- */
 var P = {};
@@ -386,11 +386,11 @@ P.ken = function (param, q) {
   var counts = { now: 0, soon: 0, later: 0, open: 0, asked: 0, answered: 0 };
   all.forEach(function (it) { var s = stat(it); counts[s.status] = (counts[s.status] || 0) + 1; if (s.status !== "answered") counts[it.urgency]++; });
   var link = function (u, d) { return "#/ken?urg=" + u + (d ? "&done=1" : ""); };
-  var h = '<div class="page"><div class="pagehead"><p class="eyebrow">Inputs needed</p><h1>Inputs needed from ' + esc(clientName()) + '</h1><p class="lede">Everything the build is waiting on from ' + esc(clientName()) + ', grouped by what the answer unblocks. Mark an item <i>asked</i> when it goes out and <i>answered</i> when it comes back; put the answer in the note.</p></div>';
+  var h = '<div class="page"><div class="pagehead"><p class="eyebrow">Inputs needed</p><h1>Inputs needed from ' + esc(clientName()) + '</h1><p class="lede">' + (OPTS.admin ? 'Everything the build is waiting on from ' + esc(clientName()) + ', grouped by what the answer unblocks. Mark an item <i>asked</i> when it goes out and <i>answered</i> when it comes back; put the answer in the note.' : 'Everything the build is waiting on from ' + esc(clientName()) + ', grouped by what each answer unblocks. Reply to any item and it comes straight to Carson.') + '</p></div>';
   h += '<div class="kenbar"><div class="grp"><span class="lbl">Urgency</span>' +
     [["all", "All open"], ["now", "Now"], ["soon", "Soon"], ["later", "Later"]].map(function (o) { var n = o[0] === "all" ? (counts.open + counts.asked) : counts[o[0]]; return '<a class="btn' + (filt === o[0] ? " on" : "") + '" href="' + link(o[0], showDone) + '">' + o[1] + ' <span class="n">' + n + "</span></a>"; }).join("") +
-    '</div><div class="grp"><a class="btn' + (showDone ? " on" : "") + '" href="' + link(filt, !showDone) + '">' + (showDone ? "Hide" : "Show") + " answered (" + counts.answered + ')</a><button class="btn" id="kencopy" type="button">Copy open items for an email</button></div></div>';
-  h += '<div class="urglegend">' + ["now", "soon", "later"].map(function (u) { return '<span><i class="urg ' + u + '">' + u + "</i> " + esc(K.urgency[u]) + "</span>"; }).join("") + '</div><p class="savenote">' + esc(Store.note) + "</p>";
+    '</div><div class="grp"><a class="btn' + (showDone ? " on" : "") + '" href="' + link(filt, !showDone) + '">' + (showDone ? "Hide" : "Show") + " answered (" + counts.answered + ')</a>' + (OPTS.admin ? '<button class="btn" id="kencopy" type="button">Copy open items for an email</button>' : '') + '</div></div>';
+  h += '<div class="urglegend">' + ["now", "soon", "later"].map(function (u) { return '<span><i class="urg ' + u + '">' + u + "</i> " + esc(K.urgency[u]) + "</span>"; }).join("") + '</div><p class="savenote">' + (OPTS.admin ? esc(Store.note) : '') + "</p>";
   var order = { now: 0, soon: 1, later: 2 };
   K.groups.forEach(function (g) {
     var items = g.items.filter(function (it) { var s = stat(it); if (s.status === "answered" && !showDone) return false; if (filt !== "all" && it.urgency !== filt && s.status !== "answered") return false; if (filt !== "all" && s.status === "answered" && it.urgency !== filt) return false; return true; })
@@ -400,8 +400,10 @@ P.ken = function (param, q) {
     h += '<div class="sect kengroup"><div class="kenhead"><div><h2>' + esc(g.title) + '</h2><p class="why">' + esc(g.why) + '</p></div><span class="chip kind">' + openN + " open</span></div><div class=\"card\"><div class=\"in\">";
     items.forEach(function (it) {
       var s = stat(it);
-      h += '<div class="kenrow ' + esc(s.status) + '"><div><div class="item"><i class="urg ' + esc(it.urgency) + '">' + esc(it.urgency) + "</i>" + (it.who && it.who !== "Ken" ? '<span class="chip person">' + esc(it.who) + "</span>" : "") + esc(it.item) + '</div><div class="meta"><b>Unblocks:</b> ' + esc(it.unblocks) + " · since " + esc(it.since) + '</div><textarea data-note="' + esc(it.id) + '" placeholder="Answer / note…">' + esc(s.note) + '</textarea></div><div><select data-status="' + esc(it.id) + '">' +
-        ["open", "asked", "answered"].map(function (o) { return '<option value="' + o + '"' + (s.status === o ? " selected" : "") + ">" + o + "</option>"; }).join("") + "</select></div></div>";
+      var mail = "mailto:carson@jipautomation.com?subject=" + encodeURIComponent("Re: " + it.item) + "&body=" + encodeURIComponent("Question: " + it.item + "\n\nAnswer:\n");
+      h += '<div class="kenrow ' + esc(s.status) + '"><div><div class="item"><i class="urg ' + esc(it.urgency) + '">' + esc(it.urgency) + "</i>" + (it.who && it.who !== "Ken" ? '<span class="chip person">' + esc(it.who) + "</span>" : "") + esc(it.item) + '</div><div class="meta"><b>Unblocks:</b> ' + esc(it.unblocks) + " · since " + esc(it.since) + '</div>' +
+        (OPTS.admin ? '<textarea data-note="' + esc(it.id) + '" placeholder="Answer / note…">' + esc(s.note) + '</textarea>' : '') + '</div><div>' +
+        (OPTS.admin ? '<select data-status="' + esc(it.id) + '">' + ["open", "asked", "answered"].map(function (o) { return '<option value="' + o + '"' + (s.status === o ? " selected" : "") + ">" + o + "</option>"; }).join("") + "</select>" : '<a class="btn" href="' + mail + '">Reply by email</a>') + "</div></div>";
     });
     h += "</div></div></div>";
   });
@@ -448,7 +450,7 @@ return {
   init: function (hub, opts) {
     H = hub; M = H.model; C = H.checklist; DOCS = H.docs; NODE = {};
     M.nodes.forEach(function (n) { NODE[n.id] = n; });
-    OPTS.main = opts.main; OPTS.onRender = opts.onRender || null;
+    OPTS.main = opts.main; OPTS.onRender = opts.onRender || null; OPTS.admin = !!opts.admin;
     Store.init();
   },
   ready: function () { return !!M; },

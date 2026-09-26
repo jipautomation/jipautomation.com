@@ -365,3 +365,17 @@ section[id]{scroll-margin-top:calc(58px + 12px)}
 @media (max-width:1000px){.stats.hero4{grid-template-columns:repeat(2,1fr)}}
 @media (max-width:760px){.mgrid{grid-template-columns:repeat(2,1fr)}.defs>div{grid-template-columns:1fr;gap:2px}}
 @media (max-width:480px){.stats.hero4,.mgrid{grid-template-columns:1fr}}
+/* admin-only sidebar entries; phone drawer */
+#dash:not([data-admin]) [data-admin-only]{display:none!important}
+.menubtn{display:none}
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:9}
+@media (max-width:860px){
+  .menubtn{display:inline-flex}
+  .ws .ui .side{position:fixed;top:calc(58px + env(safe-area-inset-top,0px));bottom:0;left:0;width:min(84vw,300px);height:auto;display:grid;align-content:start;gap:2px;padding:14px 10px;overflow-y:auto;border-right:1px solid var(--line);border-bottom:0;background:var(--surface-2);transform:translateX(-102%);transition:transform .22s ease;z-index:10}
+  .ws .ui .side.open{transform:none}
+  .ws .ui .who,.ws .ui .grp{display:flex}
+  .ws .ui .grp{display:block}
+  .ws .ui .side a{white-space:normal}
+}
+@media (prefers-reduced-motion:reduce){.ws .ui .side{transition:none}}
+#engagement .kv .r>span{flex:none}
