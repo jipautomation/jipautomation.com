@@ -26,9 +26,12 @@ var Store = {
   keys: ["checklist", "ken", "notes"],
   init: function () {
     var self = this;
+    var seed = String(H.seed_version || "");
+    try { if (localStorage.getItem("hub.seed") !== seed) { this.keys.forEach(function (k) { localStorage.removeItem("hub." + k); }); localStorage.setItem("hub.seed", seed); } } catch (e) { }
+    this.state = { checklist: null, ken: null, notes: null };
     this.keys.forEach(function (k) { try { var v = localStorage.getItem("hub." + k); if (v) self.state[k] = JSON.parse(v); } catch (e) { } });
     if (!this.state.checklist) this.state.checklist = { done: C.done.slice() };
-    if (!this.state.ken) this.state.ken = { items: {} };
+    if (!this.state.ken) this.state.ken = { items: Object.assign({}, (M.ken_tracker.state || {}).items || {}) };
     if (!this.state.notes) this.state.notes = { entries: [] };
     if (window.claude && window.claude.use) {
       window.claude.use("db").then(function (db) {
@@ -123,7 +126,8 @@ function counts() {
   C.sections.forEach(function (sec) { if (String(sec.phase || 2) !== "2") return; sec.items.forEach(function (it) { t++; if (done.indexOf(it.id) >= 0) d++; }); });
   return { workflows: M.nodes.filter(function (n) { return n.kind === "workflow"; }).length, data: M.nodes.filter(function (n) { return n.kind === "table"; }).length, ken: kenOpen, archive: M.docs.length, gotchas: M.gotchas.length, glossary: M.glossary.length, checklist: d + "/" + t };
 }
-var TITLES = { home: "Build Hub", map: "Project Map", lifecycle: "Deal Lifecycle", workflows: "Workflows", data: "Data Model", checklist: "Checklist", gotchas: "Gotchas", people: "People & Roles", glossary: "Glossary", ken: "Ken Tracker" };
+function clientName() { return (M && M.meta && (M.meta.client_short || (M.meta.org || "").split(" · ")[0])) || "the client"; }
+var TITLES = { home: "Build Hub", map: "Project Map", lifecycle: "Deal Lifecycle", workflows: "Workflows", data: "Data Model", checklist: "Checklist", gotchas: "Gotchas", people: "People & Roles", glossary: "Glossary", ken: "Inputs Needed" };
 
 /* ---------------- pages ---------------- */
 var P = {};
@@ -140,7 +144,7 @@ P.home = function () {
     M.mission.principles.map(function (p) { return '<div class="p"><b>' + esc(p[0]) + "</b><span>" + esc(p[1]) + "</span></div>"; }).join("") + "</div></div>";
   h += '<div class="statusbox"><div class="card cell"><div class="k">Just finished</div><div class="v">' + esc(s.now.title) + '</div><div class="d">' + esc(s.now.detail) + '</div></div>' +
     '<div class="card cell"><div class="k">Next action</div><div class="v">' + esc(s.next.title) + '</div><div class="d">' + esc(s.next.detail) + '</div></div>' +
-    '<div class="card cell"><div class="k">Waiting on Ken / Melanie</div><ul>' + kenNow().map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + '</ul><a class="small" href="#/ken?urg=now">Ken tracker →</a></div>' +
+    '<div class="card cell"><div class="k">Waiting on ' + esc(clientName()) + '</div><ul>' + kenNow().map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + '</ul><a class="small" href="#/ken?urg=now">Inputs needed →</a></div>' +
     '<div class="card cell"><div class="k">Waiting on you</div><ul>' + s.waiting_you.map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + '</ul><a class="small" href="#/checklist">Checklist →</a></div></div></div>';
   h += '<div class="changes card"><div class="in"><h2>Latest changes</h2><dl>' + s.changes.map(function (c) { return "<dt>" + esc(c[0]) + "</dt><dd>" + esc(c[1]) + "</dd>"; }).join("") + "</dl></div></div>";
   h += '<p class="muted small" style="margin-top:14px">Deal documents, the document archive and the worked example of a real order are kept on the private Build Hub, not in this workspace.</p>';
@@ -350,7 +354,7 @@ function gotchaList(tag, q) { q = q.toLowerCase(); var rows = M.gotchas.filter(f
 P.gotchas.after = function () { var tag = "", i = $("#gosearch"); var re = function () { $("#golist").innerHTML = gotchaList(tag, i.value); }; i.addEventListener("input", re); $$("#gotags button").forEach(function (b) { b.addEventListener("click", function () { tag = b.getAttribute("data-tag"); $$("#gotags button").forEach(function (x) { x.classList.toggle("on", x === b); }); re(); }); }); };
 
 /* ---- checklist ---- */
-function tagHtml(t) { return t === "you" ? chip("you", "on you") : t === "ken" ? chip("ken", "Kenneth") : t === "new" ? chip("new", "new") : t === "hold" ? chip("hold", "on hold") : ""; }
+function tagHtml(t) { return t === "you" ? chip("you", "on you") : t === "ken" ? chip("ken", clientName()) : t === "new" ? chip("new", "new") : t === "hold" ? chip("hold", "on hold") : ""; }
 P.checklist = function (param, q) {
   var done = Store.state.checklist.done;
   var phase = String((q && q.phase) || "2");
@@ -382,7 +386,7 @@ P.ken = function (param, q) {
   var counts = { now: 0, soon: 0, later: 0, open: 0, asked: 0, answered: 0 };
   all.forEach(function (it) { var s = stat(it); counts[s.status] = (counts[s.status] || 0) + 1; if (s.status !== "answered") counts[it.urgency]++; });
   var link = function (u, d) { return "#/ken?urg=" + u + (d ? "&done=1" : ""); };
-  var h = '<div class="page"><div class="pagehead"><p class="eyebrow">Ken tracker</p><h1>Needs from Kenneth</h1><p class="lede">Everything the build is waiting on from Legacy, grouped by what the answer unblocks. Mark an item <i>asked</i> when it goes out and <i>answered</i> when it comes back; put the answer in the note. I read this at the start of every session.</p></div>';
+  var h = '<div class="page"><div class="pagehead"><p class="eyebrow">Inputs needed</p><h1>Inputs needed from ' + esc(clientName()) + '</h1><p class="lede">Everything the build is waiting on from ' + esc(clientName()) + ', grouped by what the answer unblocks. Mark an item <i>asked</i> when it goes out and <i>answered</i> when it comes back; put the answer in the note.</p></div>';
   h += '<div class="kenbar"><div class="grp"><span class="lbl">Urgency</span>' +
     [["all", "All open"], ["now", "Now"], ["soon", "Soon"], ["later", "Later"]].map(function (o) { var n = o[0] === "all" ? (counts.open + counts.asked) : counts[o[0]]; return '<a class="btn' + (filt === o[0] ? " on" : "") + '" href="' + link(o[0], showDone) + '">' + o[1] + ' <span class="n">' + n + "</span></a>"; }).join("") +
     '</div><div class="grp"><a class="btn' + (showDone ? " on" : "") + '" href="' + link(filt, !showDone) + '">' + (showDone ? "Hide" : "Show") + " answered (" + counts.answered + ')</a><button class="btn" id="kencopy" type="button">Copy open items for an email</button></div></div>';
@@ -454,6 +458,7 @@ return {
   titles: TITLES,
   meta: function () { return M ? M.meta : null; },
   model: function () { return M; },
+  state: function () { return Store.state; },
   checklist: function () { return C; },
   parseHash: parseHash
 };

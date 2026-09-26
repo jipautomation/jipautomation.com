@@ -83,48 +83,75 @@
      when it has one, and stay empty otherwise so the structure is there for later. */
   const esc=v=>String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   function dashData(u){ const user=USERS[u];
-    const d={ processed:{v:'—',note:'No documents processed yet.'}, chart:'The chart appears once the first document goes through.',
-      tiles:[{l:'Awaiting your input',v:'—',n:'Nothing waiting'},{l:'Exceptions open',v:'—',n:'None open'},{l:'Median review time',v:'—',n:'No reviews yet'},{l:'Header fields accepted unchanged',v:'—',n:'No data yet'}],
-      project:{title:'Projects',note:'No phase in progress',phases:[1,2,3,4].map(i=>({label:'Phase '+i,small:'Not started',state:''}))},
-      approvals:[],approvalsEmpty:'No approvals waiting.',exceptions:[],exceptionsEmpty:'No open exceptions.',
+    const d={ progress:{title:'Build progress',v:'—',sub:'',note:'No build in progress.',bars:[],barsEmpty:'Steps appear once a build starts.'},
+      tiles:[{l:'Open questions for you',v:'—',n:'Nothing waiting'},{l:'Workflows built',v:'—',n:'None yet'},{l:'Tables live',v:'—',n:'None yet'},{l:'Last update',v:'—',n:'No activity yet'}],
+      project:{title:'Project',note:'No phase in progress',phases:[1,2,3,4].map(i=>({label:'Phase '+i,small:'Not started',state:''})),now:null,next:null},
+      needs:[],needsEmpty:'Nothing waiting on you.',needsNote:'',builder:[],builderEmpty:'Nothing queued for the builder.',
       automations:[],automationsNote:'0 workflows',automationsEmpty:'No automations configured yet.',
-      impact:[['Hours returned','—'],['Documents filed without retyping','—'],['Rows written without a person approving','—']],
+      tables:[],tablesNote:'0 tables',tablesEmpty:'No tables yet.',
+      impact:[['Documents in scope','—'],['Hours returned','—'],['Rows written without a person approving','—']],
       docs:[],docsEmpty:'No documents yet.', changes:[],changesEmpty:'No activity yet.' };
     if(!(user.hub&&window.JipHub&&JipHub.ready()))return d;
-    const M=JipHub.model(), C=JipHub.checklist(), c=JipHub.counts();
-    d.processed={v:'—',note:'Pipeline in test. Goes live after the Phase 2 accuracy test on real documents.'};
-    d.chart='The chart starts with the first document through the live pipeline.';
-    d.tiles[0]={l:'Awaiting your input',v:String(c.ken),n:'Open questions from the build'};
-    d.tiles[1]={l:'Exceptions open',v:'—',n:'Not live yet'}; d.tiles[2]={l:'Median review time',v:'—',n:'Not live yet'}; d.tiles[3]={l:'Header fields accepted unchanged',v:'—',n:'Measured at the accuracy test'};
+    const M=JipHub.model(), C=JipHub.checklist(), c=JipHub.counts(), meta=M.meta||{};
+    const done=(JipHub.state().checklist||{}).done||C.done||[], kenSt=(JipHub.state().ken||{}).items||{};
+    const count=list=>{let t=0,dd=0;list.forEach(s=>s.items.forEach(it=>{t++;if(done.indexOf(it.id)>=0)dd++;}));return {t,d:dd};};
+    const secs=k=>C.sections.filter(s=>String(s.phase||2)===String(k));
+    const p2=count(secs(2)), pct=p2.t?Math.round(p2.d/p2.t*100):0;
+    d.progress={title:'Build progress · '+(meta.phase||'Phase 2'),v:pct+'%',sub:p2.d+' of '+p2.t+' items',note:meta.phase_progress_note||'',
+      bars:secs(2).map(s=>{const x=count([s]);return {label:s.step+' · '+s.title,d:x.d,t:x.t};}),barsEmpty:''};
+    const wf=M.nodes.filter(n=>n.kind==='workflow'), wfDone=wf.filter(n=>n.status==='done'||n.status==='live').length, wfTest=wf.filter(n=>n.status==='next').length;
+    const tb=M.nodes.filter(n=>n.kind==='table'), tbLive=tb.filter(n=>n.status==='live').length, tbSeed=tb.filter(n=>n.status==='seeded').length, tbPh=tb.filter(n=>n.status==='placeholder').length;
+    const urg={now:0,soon:0,later:0}; (M.ken_tracker.groups||[]).forEach(g=>g.items.forEach(it=>{ if((kenSt[it.id]||{}).status!=='answered') urg[it.urgency]=(urg[it.urgency]||0)+1; }));
+    const open=urg.now+urg.soon+urg.later;
+    d.tiles=[{l:'Open questions for you',v:String(open),n:urg.now+' now · '+urg.soon+' soon · '+urg.later+' later'},
+      {l:'Workflows built',v:wfDone+' of '+wf.length,n:wfTest?wfTest+' in testing':'None in testing'},
+      {l:'Tables live',v:tbLive+' of '+tb.length,n:tbSeed+' seeded · '+tbPh+' placeholder'},
+      {l:'Last update',v:String(meta.updated||'—').replace(/, \d{4}$/,''),n:'Release '+(meta.release||'—')}];
     const ph=C.phases||{}; const t=k=>((ph[k]&&ph[k].title)||('Phase '+k)).split(' — ');
-    const done=C.done||[], cnt=k=>{let tt=0,dd=0;C.sections.forEach(s=>{if(String(s.phase||2)!==String(k))return;s.items.forEach(it=>{tt++;if(done.indexOf(it.id)>=0)dd++;});});return dd+' of '+tt;};
-    d.project={title:'Project · '+(M.meta.phase||''),note:M.meta.phase_progress_note||'',phases:[
+    const p3=count(secs(3)), p4=count(secs(4));
+    d.project={title:'Project · '+(meta.phase||''),note:p2.d+' of '+p2.t+' Phase 2 items done',phases:[
       {label:'Phase 1 · Foundation',small:'Database, review gate, alerts · done',state:'done'},
-      {label:'Phase 2 · '+(t(2)[1]||'Extraction pipeline'),small:cnt(2)+' items · in progress',state:'now'},
-      {label:'Phase 3 · '+(t(3)[1]||''),small:'Planned',state:''},
-      {label:'Phase 4 · '+(t(4)[1]||''),small:'Planned',state:''}]};
-    d.approvalsEmpty='No approvals waiting. The review gate goes live with WF-04.';
-    const pill={done:['run','Running'],live:['run','Running'],next:['test','Testing'],planned:['planned','Planned'],proposed:['planned','Proposed'],phase3:['planned','Phase 3']};
-    d.automations=M.nodes.filter(n=>n.kind==='workflow').map(n=>({name:n.label,sub:n.sub,pill:(pill[n.status]||['planned',n.status])[0],state:(pill[n.status]||['planned',n.status])[1],href:'#/workflows/'+n.id}));
-    d.automationsNote=d.automations.length+' workflows';
-    d.impact=[['Orders retyped by hand, Jan–Aug 2026','481'],['Hours returned','—'],['Rows written without a person approving','0']];
+      {label:'Phase 2 · '+(t(2)[1]||'Extraction pipeline'),small:p2.d+' of '+p2.t+' items · in progress',state:'now'},
+      {label:'Phase 3 · '+(t(3)[1]||''),small:p3.t+' items · planned',state:''},
+      {label:'Phase 4 · '+(t(4)[1]||''),small:p4.t+' items · planned',state:''}],
+      now:M.status.now||null,next:M.status.next||null};
+    const needs=[]; (M.ken_tracker.groups||[]).forEach(g=>g.items.forEach(it=>{ const st=kenSt[it.id]||{}; if(st.status!=='answered') needs.push({item:it.item,urg:it.urgency,who:it.who,unblocks:it.unblocks,status:st.status||'open'}); }));
+    const ord={now:0,soon:1,later:2}; needs.sort((a,b)=>ord[a.urg]-ord[b.urg]);
+    d.needs=needs.slice(0,6); d.needsNote=open+' open'; d.needsEmpty='Nothing waiting on you.';
+    d.builder=(M.status.waiting_you||[]).slice(0,6);
+    const pill={done:['run','Running'],live:['run','Live'],next:['test','Testing'],planned:['planned','Planned'],proposed:['planned','Proposed'],phase3:['planned','Phase 3'],seeded:['test','Seeded'],placeholder:['exc','Placeholder']};
+    const st=x=>pill[x]||['planned',x];
+    d.automations=wf.map(n=>({name:n.label,sub:n.sub,pill:st(n.status)[0],state:st(n.status)[1],href:'#/workflows/'+n.id}));
+    d.automationsNote=wfDone+' running · '+wfTest+' testing · '+(wf.length-wfDone-wfTest)+' planned';
+    d.tables=tb.map(n=>({name:n.label,sub:n.sub,pill:st(n.status)[0],state:st(n.status)[1],href:'#/data/'+n.id}));
+    d.tablesNote=tbLive+' live of '+tb.length;
+    const lib=M.nodes.filter(n=>n.id==='src_sharepoint')[0];
+    d.impact=[['Sales orders in the SharePoint library',lib&&/(\d+) PDFs/.test(lib.sub)?RegExp.$1:'481'],['Orders retyped by hand, Jan–Aug 2026','481'],['Gotchas caught and written down',String(M.gotchas.length)],['Rows written without a person approving','0']];
     d.docsEmpty='Deal documents and the archive are kept on the private Build Hub.';
     d.changes=(M.status.changes||[]).slice(0,6);
     return d; }
   function dashboardHtml(u){ const d=dashData(u);
-    const tiles=d.tiles.map((x,i)=>'<div class="stat'+(i===0&&x.v!=='—'&&x.v!=='0'?' attn':'')+'"><span class="l">'+esc(x.l)+'</span><span class="v">'+esc(x.v)+'</span><span class="l">'+esc(x.n)+'</span></div>').join('');
+    const tiles=d.tiles.map((x,i)=>'<div class="stat'+(i===0&&/^[1-9]/.test(x.v)?' attn':'')+'"><span class="l">'+esc(x.l)+'</span><span class="v">'+esc(x.v)+'</span><span class="l">'+esc(x.n)+'</span></div>').join('');
+    const bars=d.progress.bars.length?'<div class="bars">'+d.progress.bars.map(b=>{const p=b.t?Math.round(b.d/b.t*100):0;return '<div class="bar"><span class="bl">'+esc(b.label)+'</span><span class="bt"><i style="width:'+p+'%"></i></span><span class="bn">'+b.d+'/'+b.t+'</span></div>';}).join('')+'</div>':'<div class="chart empty"><span>'+esc(d.progress.barsEmpty)+'</span></div>';
     const phases=d.project.phases.map(p=>'<div class="phs '+esc(p.state)+'"><i></i>'+esc(p.label)+'<small>'+esc(p.small)+'</small></div>').join('');
+    const status=(d.project.now||d.project.next)?'<div class="kv" style="margin-top:6px">'+(d.project.now?'<div class="r" style="display:grid;grid-template-columns:110px 1fr"><span>Just finished</span><b style="font-weight:500">'+esc(d.project.now.title)+'</b></div>':'')+(d.project.next?'<div class="r" style="border:0;display:grid;grid-template-columns:110px 1fr"><span>Next action</span><b style="font-weight:500">'+esc(d.project.next.title)+'</b></div>':'')+'</div>':'';
     const rows=(list,empty,f)=>list.length?'<div class="tbl">'+list.map(f).join('')+'</div>':'<div class="empty">'+esc(empty)+'</div>';
-    const auto=rows(d.automations,d.automationsEmpty,a=>'<div class="tr"><div class="t"><b>'+(a.href?'<a href="'+esc(a.href)+'" style="text-decoration:none;color:inherit">'+esc(a.name)+'</a>':esc(a.name))+'</b><span>'+esc(a.sub)+'</span></div><span class="pill '+esc(a.pill)+'">'+esc(a.state)+'</span></div>');
-    const impact='<div class="kv">'+d.impact.map((r,i)=>'<div class="r"'+(i===d.impact.length-1?' style="border:0"':'')+'><span>'+esc(r[0])+'</span><b>'+esc(r[1])+'</b></div>').join('')+'</div>';
+    const linkRow=a=>'<div class="tr"><div class="t"><b>'+(a.href?'<a href="'+esc(a.href)+'" style="text-decoration:none;color:inherit">'+esc(a.name)+'</a>':esc(a.name))+'</b><span>'+esc(a.sub)+'</span></div><span class="pill '+esc(a.pill)+'">'+esc(a.state)+'</span></div>';
+    const urgPill={now:['exc','Now'],soon:['test','Soon'],later:['planned','Later']};
+    const needs=rows(d.needs,d.needsEmpty,n=>'<div class="tr"><div class="t"><b style="white-space:normal">'+esc(n.item)+'</b><span>Unblocks: '+esc(n.unblocks)+(n.who&&n.who!=='Ken'?' · for '+esc(n.who):'')+(n.status==='asked'?' · asked':'')+'</span></div><span class="pill '+urgPill[n.urg][0]+'">'+urgPill[n.urg][1]+'</span></div>');
+    const builder=rows(d.builder,d.builderEmpty,x=>'<div class="tr" style="grid-template-columns:1fr"><div class="t"><b style="white-space:normal;font-weight:400">'+esc(x)+'</b></div></div>');
+    const kv=list=>'<div class="kv">'+list.map((r,i)=>'<div class="r"'+(i===list.length-1?' style="border:0"':'')+'><span>'+esc(r[0])+'</span><b>'+esc(r[1])+'</b></div>').join('')+'</div>';
     const changes=d.changes.length?'<div class="kv">'+d.changes.map((c,i)=>'<div class="r"'+(i===d.changes.length-1?' style="border:0"':'')+' style="display:grid;grid-template-columns:max-content 1fr;gap:12px"><span class="mono" style="color:var(--accent);font-size:.74rem;white-space:nowrap">'+esc(c[0])+'</span><span style="color:var(--ink)">'+esc(c[1])+'</span></div>').join('')+'</div>':'<div class="empty">'+esc(d.changesEmpty)+'</div>';
-    return '<div class="cockpit"><div class="panel"><div class="ph"><h4>Documents processed</h4><div class="ctl"><span>This month ▾</span><span>Weekly ▾</span></div></div><div class="big"><span class="v">'+esc(d.processed.v)+'</span></div><p class="note">'+esc(d.processed.note)+'</p><div class="chart empty"><span>'+esc(d.chart)+'</span></div></div><div class="stats">'+tiles+'</div></div>'
-      +'<div class="panel" id="d-phase"><div class="ph"><h4>'+esc(d.project.title)+'</h4><span style="font-size:.78rem;color:var(--ink-2)">'+esc(d.project.note)+'</span></div><div class="phases">'+phases+'</div></div>'
-      +'<div class="row2"><div class="panel" id="d-appr"><div class="ph"><h4>Approvals</h4><span style="font-size:.78rem;color:var(--ink-2)">Open queue</span></div>'+rows(d.approvals,d.approvalsEmpty,a=>'')+'<div class="ph" style="margin-top:4px"><h4>Exceptions</h4></div>'+rows(d.exceptions,d.exceptionsEmpty,a=>'')+'</div>'
-      +'<div class="panel" id="d-auto"><div class="ph"><h4>Automations</h4><span style="font-size:.78rem;color:var(--ink-2)">'+esc(d.automationsNote)+'</span></div>'+auto+'</div></div>'
-      +'<div class="row2"><div class="panel" id="d-impact"><div class="ph"><h4>Business impact</h4><span style="font-size:.78rem;color:var(--ink-2)">Since the build started</span></div>'+impact+'</div>'
-      +'<div class="panel" id="d-docs"><div class="ph"><h4>Documents</h4><span style="font-size:.78rem;color:var(--ink-2)">Recent</span></div>'+rows(d.docs,d.docsEmpty,x=>'')+'</div></div>'
-      +'<div class="panel" id="d-changes"><div class="ph"><h4>Latest changes</h4><span style="font-size:.78rem;color:var(--ink-2)">From the build log</span></div>'+changes+'</div>'; }
+    const head=(t,n)=>'<div class="ph"><h4>'+esc(t)+'</h4><span style="font-size:.78rem;color:var(--ink-2)">'+esc(n)+'</span></div>';
+    return '<div class="cockpit"><div class="panel">'+head(d.progress.title,d.progress.sub)+'<div class="big"><span class="v">'+esc(d.progress.v)+'</span></div><p class="note">'+esc(d.progress.note)+'</p>'+bars+'</div><div class="stats">'+tiles+'</div></div>'
+      +'<div class="panel" id="d-phase">'+head(d.project.title,d.project.note)+'<div class="phases">'+phases+'</div>'+status+'</div>'
+      +'<div class="row2"><div class="panel" id="d-needs">'+head('Waiting on you',d.needsNote)+needs+(d.needs.length?'<p class="note" style="margin:0"><a href="#/ken">All open questions →</a></p>':'')+'</div>'
+      +'<div class="panel" id="d-builder">'+head('Next for the builder',d.builder.length?d.builder.length+' items':'')+builder+'</div></div>'
+      +'<div class="row2"><div class="panel" id="d-auto">'+head('Automations',d.automationsNote)+rows(d.automations,d.automationsEmpty,linkRow)+'</div>'
+      +'<div class="panel" id="d-tables">'+head('Data model',d.tablesNote)+rows(d.tables,d.tablesEmpty,linkRow)+'</div></div>'
+      +'<div class="row2"><div class="panel" id="d-impact">'+head('Business impact','Since the build started')+kv(d.impact)+'</div>'
+      +'<div class="panel" id="d-docs">'+head('Documents','Recent')+rows(d.docs,d.docsEmpty,x=>'')+'</div></div>'
+      +'<div class="panel" id="d-changes">'+head('Latest changes','From the build log')+changes+'</div>'; }
   function hubMessage(title,text){ return '<div class="page"><h1>'+title+'</h1><p class="muted">'+text+'</p></div>'; }
   function wsRoute(){ const dash=$('#dash'); if(!wsUser||dash.hidden)return;
     let page=parseRoute(); const view=$('#view'), hubEl=$('#hubView'), crumb=$('#crumb');
