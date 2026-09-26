@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Workspace · Jip Automation</title>
 <meta name="description" content="Client workspace: build status, approvals, documents and impact numbers.">
+<meta name="robots" content="noindex">
 <meta property="og:title" content="Workspace · Jip Automation">
 <meta property="og:description" content="Client workspace: build status, approvals, documents and impact numbers.">
 <meta name="theme-color" content="#FAFAF7" media="(prefers-color-scheme: light)">
@@ -42,100 +43,89 @@
       <span class="tag"><svg viewBox="0 0 24 24"><path d="M3 12h7V3H3zM14 21h7v-9h-7zM14 3v5h7V3zM3 16v5h7v-5z"/></svg>Client workspace</span>
       <h2>Sign in</h2>
       <p>Your build status, approvals, documents and impact numbers, in one place.</p>
-      <label>Work email<input id="s-email" type="email" autocomplete="username"></label>
-      <label>Password<input id="s-pass" type="password" autocomplete="current-password"></label>
-      <button class="btn primary" type="submit">Sign in</button>
+      <label>Username<input id="s-user" name="username" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" required></label>
+      <label>Password<input id="s-pass" name="password" type="password" autocomplete="current-password" required></label>
+      <p class="err" id="s-err" role="alert" hidden>That username and password don't match.</p>
+      <button class="btn primary" id="s-btn" type="submit">Sign in</button>
       <p class="note">Access is by invitation. Need an account? Email carson@jipautomation.com.</p>
     </form>
   </div>
 
-  <div class="ws" id="dash" hidden>
-    <!-- the dashboard component; cloned into the hero -->
+  <div class="ws" id="dash" hidden></div>
+</main>
+
+<!-- The dashboard is only stamped into the page after a successful sign-in. -->
+<template id="wsTemplate">
     <div class="ui" id="dashUi">
       <aside class="side" aria-label="Workspace sections">
-        <div class="who"><i>SC</i>Sample Client<svg viewBox="0 0 24 24"><path d="M8 10l4 4 4-4"/></svg></div>
+        <div class="who"><i data-ws-initials></i><span data-ws-name></span><svg viewBox="0 0 24 24"><path d="M8 10l4 4 4-4"/></svg></div>
         <a href="#d-top" class="is-active"><svg viewBox="0 0 24 24"><path d="M3 12h7V3H3zM14 21h7v-9h-7zM14 3v5h7V3zM3 16v5h7v-5z"/></svg>Dashboard</a>
         <div class="grp">Operations</div>
         <a href="#d-phase"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h10M4 18h6"/></svg>Projects</a>
-        <a href="#d-auto"><svg viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>Automations<span class="cnt">4</span></a>
-        <a href="#d-appr"><svg viewBox="0 0 24 24"><path d="M9 11l3 3 8-8M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg>Approvals<span class="cnt">3</span></a>
+        <a href="#d-auto"><svg viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>Automations<span class="cnt">0</span></a>
+        <a href="#d-appr"><svg viewBox="0 0 24 24"><path d="M9 11l3 3 8-8M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg>Approvals<span class="cnt">0</span></a>
         <div class="grp">Insight</div>
         <a href="#d-top"><svg viewBox="0 0 24 24"><path d="M4 19V5M4 19h16M8 15v-4M12 15V8M16 15v-6"/></svg>Business impact</a>
         <a href="#d-docs"><svg viewBox="0 0 24 24"><path d="M6 2h8l4 4v16H6zM14 2v4h4M9 13h6M9 17h6"/></svg>Documents</a>
         <div class="grp">Account</div>
         <a href="#d-support"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>Support</a>
         <a href="#d-settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></svg>Settings</a>
+        <a href="#" class="signout" data-signout><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>Sign out</a>
       </aside>
       <div class="main">
-        <div class="top"><span class="crumb" id="d-top">Dashboard</span><span>·</span><span>Document intake &amp; extraction</span><span class="sp"></span><span class="sample">Sample data</span></div>
+        <div class="top"><span class="crumb" id="d-top">Dashboard</span><span>·</span><span data-ws-name></span><span class="sp"></span><button type="button" class="btn sm" data-signout>Sign out</button></div>
         <div class="body">
           <div class="cockpit">
             <div class="panel">
-              <div class="ph"><h4>Documents processed</h4><div class="ctl"><span>September ▾</span><span>Weekly ▾</span></div></div>
-              <div class="big"><span class="v">62</span><span class="delta">↑ 18 vs August</span></div>
-              <p class="note">About 21 hours of retyping returned this month, at 20 minutes per document.</p>
-              <div class="chart"><div class="tip"></div></div>
+              <div class="ph"><h4>Documents processed</h4><div class="ctl"><span>This month ▾</span><span>Weekly ▾</span></div></div>
+              <div class="big"><span class="v">—</span></div>
+              <p class="note">No documents processed yet.</p>
+              <div class="chart empty"><span>The chart appears once the first document goes through.</span></div>
             </div>
             <div class="stats">
-              <div class="stat attn"><span class="l">Awaiting your approval</span><span class="v">3</span><span class="l" style="color:var(--warn)">Oldest 2 h 10 m</span></div>
-              <div class="stat"><span class="l">Exceptions open</span><span class="v">1</span><span class="l">Supplier not in master data</span></div>
-              <div class="stat"><span class="l">Median review time</span><span class="v">4<small>min</small></span><span class="l">Target under 15</span></div>
-              <div class="stat"><span class="l">Header fields accepted unchanged</span><span class="v">99.2<small>%</small></span><span class="l">Since go-live</span></div>
+              <div class="stat"><span class="l">Awaiting your approval</span><span class="v">—</span><span class="l">Nothing waiting</span></div>
+              <div class="stat"><span class="l">Exceptions open</span><span class="v">—</span><span class="l">None open</span></div>
+              <div class="stat"><span class="l">Median review time</span><span class="v">—</span><span class="l">No reviews yet</span></div>
+              <div class="stat"><span class="l">Header fields accepted unchanged</span><span class="v">—</span><span class="l">No data yet</span></div>
             </div>
           </div>
 
           <div class="panel" id="d-phase">
-            <div class="ph"><h4>Project · Phase 2 of 4</h4><span style="font-size:.78rem;color:var(--ink-2)">Next gate: accuracy test on ten real documents</span></div>
+            <div class="ph"><h4>Project</h4><span style="font-size:.78rem;color:var(--ink-2)">No phase in progress</span></div>
             <div class="phases">
-              <div class="phs done"><i></i>Foundation<small>Database, review gate, alerts</small></div>
-              <div class="phs now"><i></i>Intake &amp; extraction<small>Orders and invoices, end to end</small></div>
-              <div class="phs"><i></i>Documents<small>Lease schedule, e-signature packet</small></div>
-              <div class="phs"><i></i>Scale<small>Confirmations, notices, reporting</small></div>
+              <div class="phs"><i></i>Phase 1<small>Not started</small></div>
+              <div class="phs"><i></i>Phase 2<small>Not started</small></div>
+              <div class="phs"><i></i>Phase 3<small>Not started</small></div>
+              <div class="phs"><i></i>Phase 4<small>Not started</small></div>
             </div>
           </div>
 
           <div class="row2">
             <div class="panel" id="d-appr">
               <div class="ph"><h4>Approvals</h4><span style="font-size:.78rem;color:var(--ink-2)">Open queue</span></div>
-              <div class="tbl">
-                <div class="tr"><div class="t"><b>Tonnellerie du Val · SO BC-17182</b><span>Sales order · waiting 2 h 10 m</span></div><span class="btn sm primary">Review</span></div>
-                <div class="tr"><div class="t"><b>Barrel Works · INV 2026-0912</b><span>Invoice · 13 lines · 0.00 variance</span></div><span class="btn sm primary">Review</span></div>
-                <div class="tr"><div class="t"><b>Coastal Coopers · SO 4471</b><span>Sales order · waiting 25 m</span></div><span class="btn sm primary">Review</span></div>
-              </div>
+              <div class="empty">No approvals waiting.</div>
               <div class="ph" style="margin-top:4px"><h4>Exceptions</h4></div>
-              <div class="tbl">
-                <div class="tr"><div class="t"><b>Unknown supplier · "Forêt &amp; Fils"</b><span>Add to master data or map to an existing supplier</span></div><span class="pill exc">Needs you</span></div>
-              </div>
+              <div class="empty">No open exceptions.</div>
             </div>
             <div class="panel" id="d-auto">
-              <div class="ph"><h4>Automations</h4><span style="font-size:.78rem;color:var(--ink-2)">4 workflows</span></div>
-              <div class="tbl">
-                <div class="tr"><div class="t"><b>Intake &amp; classification</b><span>Watches the shared folder · 62 runs this month</span></div><span class="pill run">Running</span></div>
-                <div class="tr"><div class="t"><b>Sales order extraction</b><span>Header + lines → review → filed</span></div><span class="pill run">Running</span></div>
-                <div class="tr"><div class="t"><b>Invoice extraction</b><span>Matches the order, compares totals</span></div><span class="pill test">Testing</span></div>
-                <div class="tr"><div class="t"><b>Lease schedule generation</b><span>Phase 3</span></div><span class="pill planned">Planned</span></div>
-              </div>
+              <div class="ph"><h4>Automations</h4><span style="font-size:.78rem;color:var(--ink-2)">0 workflows</span></div>
+              <div class="empty">No automations configured yet.</div>
             </div>
           </div>
 
           <div class="row2">
             <div class="panel" id="d-docs">
               <div class="ph"><h4>Documents</h4><span style="font-size:.78rem;color:var(--ink-2)">Recent</span></div>
-              <div class="tbl">
-                <div class="tr"><div class="t"><b>Phase 2 exit test.pdf</b><span>Acceptance criteria · updated today</span></div><span class="pill planned">Draft</span></div>
-                <div class="tr"><div class="t"><b>Data model v3.pdf</b><span>Tables, links, who writes what</span></div><span class="pill run">Current</span></div>
-                <div class="tr"><div class="t"><b>Session log · 24 Sep.md</b><span>What changed, what's next, needs from you</span></div><span class="pill run">Current</span></div>
-                <div class="tr"><div class="t"><b>Monthly health note · Aug.pdf</b><span>Documents, exceptions, changes shipped</span></div><span class="pill run">Sent</span></div>
-              </div>
+              <div class="empty">No documents yet.</div>
             </div>
             <div class="panel" id="d-support">
-              <div class="ph"><h4>Support &amp; plan</h4><span class="pill run">Run + Improve</span></div>
+              <div class="ph"><h4>Support &amp; plan</h4><span class="pill planned">No plan</span></div>
               <div class="kv">
-                <div class="r"><span>Break-fix response</span><b>Within 1 business day</b></div>
-                <div class="r"><span>Monitoring</span><b>Daily digest, 7 AM</b></div>
-                <div class="r"><span>Change hours, September</span><b>2 of 6 used</b></div>
+                <div class="r"><span>Break-fix response</span><b>—</b></div>
+                <div class="r"><span>Monitoring</span><b>—</b></div>
+                <div class="r"><span>Change hours</span><b>—</b></div>
               </div>
-              <div class="hours" aria-hidden="true"><i></i></div>
+              <div class="hours" aria-hidden="true"><i style="width:0"></i></div>
               <div style="display:flex;gap:8px;flex-wrap:wrap"><span class="btn sm">Request a change</span><span class="btn sm">Report a problem</span></div>
             </div>
           </div>
@@ -150,17 +140,16 @@
                   <button type="button" data-theme-pick="system">System</button>
                 </div>
               </div>
-              <div class="r"><span>Reviewers</span><b>R. Chen, M. Ortiz</b></div>
-              <div class="r"><span>Review emails from</span><b>reviews@jipautomation.com</b></div>
-              <div class="r"><span>Exception owner</span><b>Operations</b></div>
-              <div class="r" style="border:0"><span>Data export</span><b>On request, CSV</b></div>
+              <div class="r"><span>Reviewers</span><b>—</b></div>
+              <div class="r"><span>Review emails from</span><b>—</b></div>
+              <div class="r"><span>Exception owner</span><b>—</b></div>
+              <div class="r" style="border:0"><span>Data export</span><b>—</b></div>
             </div>
           </div>
         </div>
       </div>
     </div>
-  </div>
-</main>
+</template>
 <script src="/assets/site.js"></script>
 </body>
 </html>

@@ -42,9 +42,39 @@
     const sel=()=>{const r=document.createRange();r.selectNodeContents($('#email'));const s=getSelection();s.removeAllRanges();s.addRange(r);};
     if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(done).catch(sel)}else sel(); });
 
-  /* workspace sign-in (placeholder until a login layer exists) */
-  if($('#signin')) $('#signin').addEventListener('submit',e=>{e.preventDefault();$('#signinWrap').hidden=true;$('#dash').hidden=false;drawChart($('#dashUi .chart'));});
-  $$('#dashUi .side a').forEach(a=>a.addEventListener('click',()=>{$$('#dashUi .side a').forEach(x=>x.classList.remove('is-active'));a.classList.add('is-active')}));
+  /* workspace sign-in.
+     Static site: credentials are checked in the browser against salted PBKDF2 hashes.
+     Passwords are never stored here. This gates the page; it is not a substitute for a
+     real auth layer once client data lives in the workspace. */
+  const USERS={
+    legacy:{name:'Legacy',initials:'LG',salt:'7b0712fc61da3a10e5760e5458db6f74',hash:'f52f2e050e130b9645ce603b2b9e6cdc750a087ae45a6a7de173f5d955a22236'},
+    carson:{name:'Carson',initials:'CJ',salt:'22c9a7bd37020c99d7dbbb88f2caa07b',hash:'9014fdc795a34fdffdcc1899015a27c4d1970bd9afb00ed9a3cb518a6e7a2a7b',admin:true}
+  };
+  const ITER=200000, SESSION='jip-ws-user';
+  const hex=b=>[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');
+  const unhex=h=>new Uint8Array(h.match(/../g).map(x=>parseInt(x,16)));
+  async function derive(pass,saltHex){ const enc=new TextEncoder(); const key=await crypto.subtle.importKey('raw',enc.encode(pass),'PBKDF2',false,['deriveBits']);
+    return hex(await crypto.subtle.deriveBits({name:'PBKDF2',hash:'SHA-256',salt:unhex(saltHex),iterations:ITER},key,256)); }
+  function mountDash(u){ const user=USERS[u]; if(!user)return; const dash=$('#dash'); dash.innerHTML=$('#wsTemplate').innerHTML;
+    $$('[data-ws-name]',dash).forEach(el=>el.textContent=user.name); $$('[data-ws-initials]',dash).forEach(el=>el.textContent=user.initials);
+    dash.dataset.user=u; if(user.admin)dash.dataset.admin='1';
+    $$('[data-theme-pick]',dash).forEach(b=>{b.setAttribute('aria-pressed',String(b.dataset.themePick===current()));b.addEventListener('click',()=>applyTheme(b.dataset.themePick));});
+    $$('.side a[href^="#"]',dash).forEach(a=>a.addEventListener('click',()=>{$$('.side a',dash).forEach(x=>x.classList.remove('is-active'));a.classList.add('is-active')}));
+    $$('[data-signout]',dash).forEach(b=>b.addEventListener('click',e=>{e.preventDefault();signOut();}));
+    $('#signinWrap').hidden=true; dash.hidden=false; }
+  function signOut(){ try{sessionStorage.removeItem(SESSION)}catch(e){} $('#dash').hidden=true; $('#dash').innerHTML=''; $('#signinWrap').hidden=false; const f=$('#signin'); f.reset(); $('#s-user').focus(); }
+  if($('#signin')){
+    let saved=null; try{saved=sessionStorage.getItem(SESSION)}catch(e){}
+    if(saved&&USERS[saved])mountDash(saved);
+    $('#signin').addEventListener('submit',async e=>{e.preventDefault(); const f=e.target, err=$('#s-err'), btn=$('#s-btn');
+      const u=f.username.value.trim().toLowerCase(), p=f.password.value; err.hidden=true;
+      if(!u||!p){ (u?f.password:f.username).focus(); return; }
+      btn.disabled=true; btn.textContent='Checking…';
+      let ok=false; try{ const rec=USERS[u]; if(rec&&crypto.subtle){ ok=(await derive(p,rec.salt))===rec.hash; } }catch(x){}
+      btn.disabled=false; btn.textContent='Sign in';
+      if(!ok){ err.hidden=false; f.password.value=''; f.password.focus(); return; }
+      try{sessionStorage.setItem(SESSION,u)}catch(x){} mountDash(u); });
+  }
 
   /* chart: one series, thin line, faint area, hover crosshair */
   function drawChart(c){ if(!c||c.dataset.drawn)return; c.dataset.drawn='1';

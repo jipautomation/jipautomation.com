@@ -322,3 +322,13 @@ section[id]{scroll-margin-top:calc(58px + 12px)}
   .ui .row2{grid-template-columns:1fr}
 }
 @media (max-width:520px){.stats{grid-template-columns:1fr}.phases{grid-template-columns:1fr 1fr}}
+
+/* ---------- Workspace: sign-in errors, empty states, sign out ---------- */
+.signin .err{font-size:.84rem;color:var(--bad);background:color-mix(in srgb,var(--bad) 10%,transparent);border:1px solid color-mix(in srgb,var(--bad) 30%,transparent);padding:9px 12px;border-radius:var(--r-xs)}
+.signin button[disabled]{opacity:.7;cursor:progress}
+.empty{padding:22px 14px;border:1px dashed var(--line-2);border-radius:var(--r-xs);color:var(--ink-3);font-size:.82rem;text-align:center}
+.chart.empty{min-height:180px;display:grid;place-items:center;padding:14px}
+.big .v:only-child{color:var(--ink-3)}
+.ui .side a.signout{margin-top:8px;color:var(--ink-3)}
+.ui .side a.signout:hover{color:var(--bad)}
+.ui .top .btn{margin-left:8px}
