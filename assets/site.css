@@ -78,8 +78,9 @@ img{max-width:100%}
 @supports not (backdrop-filter:blur(1px)){.nav{background:var(--bg)}}
 .nav .wrap{display:flex;align-items:center;justify-content:space-between;height:58px;gap:16px}
 .brand{display:flex;align-items:center;gap:9px;text-decoration:none;font-weight:600;font-size:.98rem;letter-spacing:-.01em}
-.brand .mark{width:24px;height:24px;border-radius:7px;background:var(--ink);position:relative;flex:none}
-.brand .mark::after{content:"";position:absolute;inset:6px 6px 6px 10px;border-radius:2px;background:var(--bg);clip-path:polygon(0 0,100% 0,100% 100%,55% 100%,55% 42%,0 42%)}
+.brand .mark{width:26px;height:26px;flex:none;display:block;transition:transform .35s cubic-bezier(.2,.7,.2,1);transform:perspective(160px) rotateY(0) rotateX(0);filter:drop-shadow(0 1px 1px rgba(12,16,28,.25))}
+.brand:hover .mark{transform:perspective(160px) rotateY(-22deg) rotateX(10deg)}
+@media (prefers-reduced-motion:reduce){.brand .mark{transition:none}.brand:hover .mark{transform:none}}
 .nav ul{list-style:none;display:flex;gap:4px;margin:0;padding:0;font-size:.9rem}
 .nav ul a{text-decoration:none;color:var(--ink-2);padding:7px 10px;border-radius:var(--r-xs)}
 .nav ul a:hover{color:var(--ink);background:var(--surface-2)}
