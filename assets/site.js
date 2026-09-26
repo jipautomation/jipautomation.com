@@ -67,7 +67,7 @@
 
   /* workspace shell: dashboard, support and settings are the workspace's own pages;
      everything else in the sidebar is a Build Hub page rendered by assets/hub.js. */
-  const WS_PAGES={dashboard:'Dashboard',support:'Support',settings:'Settings'};
+  const WS_PAGES={dashboard:'Dashboard',metrics:'Metrics',support:'Support',settings:'Settings'};
   let wsUser=null, hubState='none';
   function loadScript(src){ return new Promise((res,rej)=>{ const s=document.createElement('script'); s.src=src; s.onload=res; s.onerror=()=>rej(new Error('failed '+src)); document.head.appendChild(s); }); }
   function fillUser(root,u){ const user=USERS[u];
@@ -152,11 +152,71 @@
       +'<div class="row2"><div class="panel" id="d-impact">'+head('Business impact','Since the build started')+kv(d.impact)+'</div>'
       +'<div class="panel" id="d-docs">'+head('Documents','Recent')+rows(d.docs,d.docsEmpty,x=>'')+'</div></div>'
       +'<div class="panel" id="d-changes">'+head('Latest changes','From the build log')+changes+'</div>'; }
+  /* Metrics. The value the automation creates once it is live, in time and money.
+     Every number is a placeholder until the pipeline writes real rows; the layout, the
+     definitions and the data sources are fixed now so nothing has to be designed later. */
+  function metricsData(u){ const user=USERS[u]; const hub=user.hub&&window.JipHub&&JipHub.ready()?JipHub.model():null;
+    const client=hub&&hub.meta?(hub.meta.client_short||'the client'):'the client';
+    const d={ client, live:false, period:'Since go-live',
+      hero:[
+        {k:'Hours returned',v:'—',u:'h',n:'Documents × minutes a person no longer spends'},
+        {k:'Labour value returned',v:'—',u:'$',n:'Hours returned × loaded hourly rate'},
+        {k:'Money protected',v:'—',u:'$',n:'Variances and duplicates caught before the books'},
+        {k:'Net value',v:'—',u:'$',n:'Value returned and protected, minus the cost to run'}],
+      time:[
+        {k:'Documents processed',v:'—',n:'Sales orders + invoices, filed'},
+        {k:'Minutes per document, now',v:'—',n:'Arrival → filed, median'},
+        {k:'Minutes per document, before',v:'—',n:'Manual retype, baseline'},
+        {k:'Reviewer minutes per document',v:'—',n:'Open form → approve, median'},
+        {k:'Straight-through rate',v:'—',n:'Approved with no field changed'},
+        {k:'Review backlog',v:'—',n:'Oldest item waiting'}],
+      money:[
+        {k:'Invoice variances caught',v:'—',n:'Count · $ over sales order'},
+        {k:'Duplicates blocked',v:'—',n:'Same document, second arrival'},
+        {k:'Tariff and freight corrections',v:'—',n:'Estimate → actual, $ moved'},
+        {k:'Cost to run',v:'—',n:'Monthly plan + tools'},
+        {k:'Payback',v:'—',n:'Months of net value to cover the build'},
+        {k:'Return on the build',v:'—',n:'Net value ÷ build cost'}],
+      quality:[
+        {k:'Header fields accepted unchanged',v:'—',n:'Per document, since go-live'},
+        {k:'Line items accepted unchanged',v:'—',n:'Invoices only'},
+        {k:'Exceptions per 100 documents',v:'—',n:'Sent to the exceptions list'},
+        {k:'Rows written without approval',v:'—',n:'Must stay 0'}],
+      assumptions:[['Manual minutes per document','—'],['Loaded hourly rate','—'],['Baseline volume per month','—'],['Build cost','—'],['Monthly run cost','—'],['Go-live date','—']],
+      sources:[['Documents processed','—'],['Turnaround and reviewer time','—'],['Straight-through rate and field accuracy','—'],['Variances caught','—'],['Exceptions','—'],['Rows written','—']],
+      charts:[{t:'Hours returned per week',e:'Starts with the first live document.'},{t:'Net value per month',e:'Value returned and protected, minus cost to run.'},{t:'Documents per week by type',e:'Sales orders and invoices.'},{t:'Turnaround per document',e:'Arrival → filed, with the manual baseline as a reference line.'}] };
+    if(!hub)return d;
+    d.assumptions=[['Manual minutes per document','20 · assumption, to confirm'],['Loaded hourly rate','— · to confirm with '+client],['Baseline volume per month','≈60 · 481 orders over Jan–Aug 2026'],['Build cost','— · fixed price per phase'],['Monthly run cost','— · plan + tools'],['Go-live date','— · after the Phase 2 accuracy test']];
+    d.sources=[['Documents processed','document_intake'],['Turnaround and reviewer time','document_intake · review_queue'],['Straight-through rate and field accuracy','review_queue (raw vs approved JSON)'],['Variances caught','invoice_header vs sales_order_header'],['Exceptions','exception_queue'],['Rows written','sales_order_header · invoice_header · audit_log']];
+    return d; }
+  function metricsHtml(u){ const d=metricsData(u);
+    const hero=d.hero.map(h=>'<div class="stat hero"><span class="l">'+esc(h.k)+'</span><span class="v">'+(h.u==='$'&&h.v!=='—'?'$':'')+esc(h.v)+(h.u==='h'&&h.v!=='—'?'<small>h</small>':'')+'</span><span class="l">'+esc(h.n)+'</span></div>').join('');
+    const grid=list=>'<div class="mgrid">'+list.map(x=>'<div class="m"><span class="k">'+esc(x.k)+'</span><span class="v">'+esc(x.v)+'</span><span class="n">'+esc(x.n)+'</span></div>').join('')+'</div>';
+    const kv=list=>'<div class="kv">'+list.map((r,i)=>'<div class="r"'+(i===list.length-1?' style="border:0"':'')+'><span>'+esc(r[0])+'</span><b'+(/^—/.test(r[1])?' style="color:var(--ink-3);font-weight:400"':'')+'>'+esc(r[1])+'</b></div>').join('')+'</div>';
+    const head=(t,n)=>'<div class="ph"><h4>'+esc(t)+'</h4><span style="font-size:.78rem;color:var(--ink-2)">'+esc(n)+'</span></div>';
+    const chart=c=>'<div class="panel">'+head(c.t,'')+'<div class="chart empty"><span>'+esc(c.e)+'</span></div></div>';
+    return '<div class="mtop"><div class="seg" role="group" aria-label="Period"><button type="button" aria-pressed="false">This month</button><button type="button" aria-pressed="false">Quarter</button><button type="button" aria-pressed="true">Since go-live</button></div><span class="pill '+(d.live?'run':'planned')+'">'+(d.live?'Live':'Not live yet')+'</span></div>'
+      +'<div class="stats hero4">'+hero+'</div>'
+      +'<div class="row2">'+chart(d.charts[0])+chart(d.charts[1])+'</div>'
+      +'<div class="panel">'+head('Time','Where the hours come from')+grid(d.time)+'</div>'
+      +'<div class="panel">'+head('Money','What the system protects and what it costs')+grid(d.money)+'</div>'
+      +'<div class="panel">'+head('Accuracy','What keeps the money numbers honest')+grid(d.quality)+'</div>'
+      +'<div class="row2">'+chart(d.charts[2])+chart(d.charts[3])+'</div>'
+      +'<div class="row2"><div class="panel">'+head('Assumptions','The levers that turn counts into dollars')+kv(d.assumptions)+'</div>'
+      +'<div class="panel">'+head('Data sources','Which table each number is read from')+kv(d.sources)+'</div></div>'
+      +'<div class="panel">'+head('How each number is computed','Fixed now, so the live numbers need no interpretation')+'<div class="defs">'
+      +'<div><b>Hours returned</b><span>documents filed × (manual minutes per document − reviewer minutes per document) ÷ 60</span></div>'
+      +'<div><b>Labour value returned</b><span>hours returned × loaded hourly rate</span></div>'
+      +'<div><b>Money protected</b><span>sum of invoice-vs-order variances flagged before approval + value of duplicates blocked + tariff/freight estimate corrections</span></div>'
+      +'<div><b>Net value</b><span>labour value returned + money protected − cost to run for the period</span></div>'
+      +'<div><b>Straight-through rate</b><span>documents approved with zero field changes ÷ documents approved</span></div>'
+      +'<div><b>Payback</b><span>build cost ÷ average monthly net value</span></div>'
+      +'</div></div>'; }
   function hubMessage(title,text){ return '<div class="page"><h1>'+title+'</h1><p class="muted">'+text+'</p></div>'; }
   function wsRoute(){ const dash=$('#dash'); if(!wsUser||dash.hidden)return;
     let page=parseRoute(); const view=$('#view'), hubEl=$('#hubView'), crumb=$('#crumb');
     if(!page){ history.replaceState(null,'','#/dashboard'); page='dashboard'; }
-    if(WS_PAGES[page]){ hubEl.hidden=true; view.hidden=false; view.innerHTML= page==='dashboard' ? dashboardHtml(wsUser) : $('#tpl-'+page).innerHTML; fillUser(view,wsUser); crumb.textContent=WS_PAGES[page]; window.scrollTo(0,0); }
+    if(WS_PAGES[page]){ hubEl.hidden=true; view.hidden=false; view.innerHTML= page==='dashboard' ? dashboardHtml(wsUser) : page==='metrics' ? metricsHtml(wsUser) : $('#tpl-'+page).innerHTML; fillUser(view,wsUser); crumb.textContent=WS_PAGES[page]; window.scrollTo(0,0); }
     else if(window.JipHub&&JipHub.ready()&&JipHub.has(page)){ view.hidden=true; hubEl.hidden=false; JipHub.render(); crumb.textContent=JipHub.titles[page]||'Build Hub'; }
     else if(hubState==='ready'){ location.replace('#/dashboard'); return; }
     else { view.hidden=true; hubEl.hidden=false; crumb.textContent='Build Hub';
