@@ -168,13 +168,12 @@
     const head=(t,n)=>'<div class="ph"><h4>'+esc(t)+'</h4><span style="font-size:.78rem;color:var(--ink-2)">'+esc(n)+'</span></div>';
     return '<div class="cockpit"><div class="panel">'+head(d.progress.title,d.progress.sub)+'<div class="big"><span class="v">'+esc(d.progress.v)+'</span></div><p class="note">'+esc(d.progress.note)+'</p>'+bars+'</div><div class="stats">'+tiles+'</div></div>'
       +'<div class="panel" id="d-phase">'+head(d.project.title,d.project.note)+'<div class="phases">'+phases+'</div>'+status+'</div>'
-      +'<div class="row2"><div class="panel" id="d-needs">'+head('Inputs needed',d.needsNote)+needs+(d.needs.length?'<p class="note" style="margin:0"><a href="#/ken">All inputs needed →</a></p>':'')+'</div>'
-      +'<div class="panel" id="d-builder">'+head('Next for the builder',d.builder.length?d.builder.length+' items':'')+builder+'</div></div>'
+      +'<div class="row2"><div class="panel" id="d-builder">'+head('Next for the builder',d.builder.length?d.builder.length+' items':'')+builder+'</div>'
+      +'<div class="panel" id="d-impact">'+head('Business impact','Since the build started')+kv(d.impact)+'</div></div>'
       +'<div class="row2"><div class="panel" id="d-auto">'+head('Automations',d.automationsNote)+rows(d.automations,d.automationsEmpty,linkRow)+'</div>'
       +'<div class="panel" id="d-tables">'+head('Data model',d.tablesNote)+rows(d.tables,d.tablesEmpty,linkRow)+'</div></div>'
-      +'<div class="row2"><div class="panel" id="d-impact">'+head('Business impact','Since the build started')+kv(d.impact)+'</div>'
-      +'<div class="panel" id="d-docs">'+head('Documents','Recent')+rows(d.docs,d.docsEmpty,x=>'')+'</div></div>'
-      +'<div class="panel" id="d-changes">'+head('Latest changes','From the build log')+changes+'</div>'; }
+      +'<div class="row2"><div class="panel" id="d-changes">'+head('Latest changes','From the build log')+changes+'</div>'
+      +'<div class="panel" id="d-docs">'+head('Documents','Recent')+rows(d.docs,d.docsEmpty,x=>'')+'</div></div>'; }
   /* Metrics. The value the automation creates once it is live, in time and money.
      Every number is a placeholder until the pipeline writes real rows; the layout, the
      definitions and the data sources are fixed now so nothing has to be designed later. */
