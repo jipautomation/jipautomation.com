@@ -1,4 +1,4 @@
-/* Legacy Build Hub, ported from the Cowork artifact to run inside the Jip Automation workspace.
+/* Legacy Build Hub, ported from the Cowork artifact to run inside the Threaded Automation workspace.
    Pages render into a container the workspace provides; the workspace owns the sidebar and routing. */
 window.JipHub = (function () {
 "use strict";
@@ -400,7 +400,7 @@ P.ken = function (param, q) {
     h += '<div class="sect kengroup"><div class="kenhead"><div><h2>' + esc(g.title) + '</h2><p class="why">' + esc(g.why) + '</p></div><span class="chip kind">' + openN + " open</span></div><div class=\"card\"><div class=\"in\">";
     items.forEach(function (it) {
       var s = stat(it);
-      var mail = "mailto:carson@jipautomation.com?subject=" + encodeURIComponent("Re: " + it.item) + "&body=" + encodeURIComponent("Question: " + it.item + "\n\nAnswer:\n");
+      var mail = "mailto:carson@threadedautomation.com?subject=" + encodeURIComponent("Re: " + it.item) + "&body=" + encodeURIComponent("Question: " + it.item + "\n\nAnswer:\n");
       h += '<div class="kenrow ' + esc(s.status) + '"><div><div class="item"><i class="urg ' + esc(it.urgency) + '">' + esc(it.urgency) + "</i>" + (it.who && it.who !== "Ken" ? '<span class="chip person">' + esc(it.who) + "</span>" : "") + esc(it.item) + '</div><div class="meta"><b>Unblocks:</b> ' + esc(it.unblocks) + " · since " + esc(it.since) + '</div>' +
         (OPTS.admin ? '<textarea data-note="' + esc(it.id) + '" placeholder="Answer / note…">' + esc(s.note) + '</textarea>' : '') + '</div><div>' +
         (OPTS.admin ? '<select data-status="' + esc(it.id) + '">' + ["open", "asked", "answered"].map(function (o) { return '<option value="' + o + '"' + (s.status === o ? " selected" : "") + ">" + o + "</option>"; }).join("") + "</select>" : '<a class="btn" href="' + mail + '">Reply by email</a>') + "</div></div>";
