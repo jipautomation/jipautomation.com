@@ -69,7 +69,9 @@
      is only readable after a valid sign-in. */
   const USERS={
     legacy:{name:'Legacy',initials:'LG',salt:'dfbfb4b3df30b249ba08932f9b728c1f',hash:'2d96cf413653194b7ea39c67d182643e157a59252b6f3ba10cf64ec2a00b91e7',hub:'legacy'},
-    carson:{name:'Carson',initials:'CJ',salt:'22c9a7bd37020c99d7dbbb88f2caa07b',hash:'9014fdc795a34fdffdcc1899015a27c4d1970bd9afb00ed9a3cb518a6e7a2a7b',hub:null,admin:true}
+    carson:{name:'Carson',initials:'CJ',salt:'22c9a7bd37020c99d7dbbb88f2caa07b',hash:'9014fdc795a34fdffdcc1899015a27c4d1970bd9afb00ed9a3cb518a6e7a2a7b',hub:null,admin:true},
+    /* Builder's view of the Legacy workspace: the Legacy hub plus the admin-only Builder pages (Checklist, Gotchas, Build notes). */
+    legacyadmin:{name:'Legacy · Builder',initials:'LB',salt:'dc810f05f13969249a02bad77c8b543b',hash:'9b1772b17208ae7034aa69d295d0142316457a39c181fa1277db1f184cc40134',hub:'legacy',admin:true}
   };
   const ITER=200000, SESSION='jip-ws-user', SESSION_KEY='jip-ws-key';
   const ASSET_V=(document.currentScript&&(document.currentScript.src.match(/[?&]v=([^&]+)/)||[])[1])||'';
