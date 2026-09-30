@@ -253,14 +253,14 @@
         : hubMessage('Build Hub unavailable','The hub data could not be opened. Sign out and back in, or try again in a moment.'); }
     setActive(page); }
   async function mountDash(u,kek,dkRaw){ const user=USERS[u]; if(!user)return; wsUser=u; const dash=$('#dash'); dash.innerHTML=$('#wsTemplate').innerHTML;
-    fillUser(dash,u); dash.dataset.user=u; if(user.admin)dash.dataset.admin='1';
+    fillUser(dash,u); dash.dataset.user=u; if(user.admin)dash.dataset.admin='1'; else{ delete dash.dataset.admin; $$('[data-admin-only]',dash).forEach(el=>el.remove()); }
     $('#signinWrap').hidden=true; dash.hidden=false;
     hubState=user.hub?'loading':'none'; wsRoute();
     if(user.hub){ try{ const q=ASSET_V?'?v='+ASSET_V:''; const opened=await openHub(user.hub,u,kek,dkRaw); if(!window.JipHub)await loadScript('/assets/hub.js'+q);
         JipHub.init(opened.data,{main:$('#hubView'),admin:!!user.admin,onRender:()=>{refreshCounts();}}); hubState='ready'; try{sessionStorage.setItem(SESSION_KEY,b64e(opened.dk))}catch(e){} refreshCounts(); }
       catch(e){ hubState='error'; }
       if(!WS_PAGES[parseRoute()]||parseRoute()==='dashboard')wsRoute(); } }
-  function signOut(){ closeMenu(); try{sessionStorage.removeItem(SESSION);sessionStorage.removeItem(SESSION_KEY)}catch(e){} wsUser=null; hubState='none'; $('#dash').hidden=true; $('#dash').innerHTML=''; $('#signinWrap').hidden=false; history.replaceState(null,'',location.pathname); const f=$('#signin'); f.reset(); $('#s-user').focus(); }
+  function signOut(){ closeMenu(); try{sessionStorage.removeItem(SESSION);sessionStorage.removeItem(SESSION_KEY)}catch(e){} wsUser=null; hubState='none'; $('#dash').hidden=true; $('#dash').innerHTML=''; delete $('#dash').dataset.admin; $('#signinWrap').hidden=false; history.replaceState(null,'',location.pathname); const f=$('#signin'); f.reset(); $('#s-user').focus(); }
   if($('#signin')){
     let saved=null, savedKey=null; try{saved=sessionStorage.getItem(SESSION);savedKey=sessionStorage.getItem(SESSION_KEY)}catch(e){}
     if(saved&&USERS[saved]) mountDash(saved,null,savedKey?b64d(savedKey):null);
