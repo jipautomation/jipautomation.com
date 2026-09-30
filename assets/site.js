@@ -104,7 +104,8 @@
     const mb=$('#menuBtn',root); if(mb)mb.addEventListener('click',()=>{ $('#side').classList.contains('open')?closeMenu():openMenu(); }); }
   function parseRoute(){ const h=(location.hash||'').replace(/^#\/?/,''); return h.split(/[/?]/)[0]||''; }
   function setActive(page){ $$('#dashUi .side a[data-page]').forEach(a=>a.classList.toggle('is-active',a.dataset.page===page)); }
-  function refreshCounts(){ if(!(window.JipHub&&JipHub.ready()))return; const c=JipHub.counts(); $$('#dashUi [data-count]').forEach(el=>{ const v=c[el.dataset.count]; el.textContent=v==null?'':String(v); }); }
+  function hubReady(){ return !!(wsUser&&USERS[wsUser]&&USERS[wsUser].hub&&window.JipHub&&JipHub.ready()); }
+  function refreshCounts(){ if(!hubReady())return; const c=JipHub.counts(); $$('#dashUi [data-count]').forEach(el=>{ const v=c[el.dataset.count]; el.textContent=v==null?'':String(v); }); }
   /* Dashboard. One layout for every workspace; the values come from the workspace's hub
      when it has one, and stay empty otherwise so the structure is there for later. */
   const esc=v=>String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -235,7 +236,7 @@
       +'<div><b>Straight-through rate</b><span>documents approved with zero field changes ÷ documents approved</span></div>'
       +'<div><b>Payback</b><span>build cost ÷ average monthly net value</span></div>'
       +'</div></div>'; }
-  function fillEngagement(root){ const card=$('#engagement',root); if(!card)return; if(!(window.JipHub&&JipHub.ready())){ card.hidden=true; return; }
+  function fillEngagement(root){ const card=$('#engagement',root); if(!card)return; if(!hubReady()){ card.hidden=true; return; }
     const M=JipHub.model(), C=JipHub.checklist(), done=(JipHub.state().checklist||{}).done||[]; let t=0,d=0; C.sections.forEach(s=>{ if(String(s.phase||2)!=='2')return; s.items.forEach(it=>{t++; if(done.indexOf(it.id)>=0)d++;}); });
     $('[data-eng-phase]',card).textContent=(M.meta.phase||'').split(' — ')[0]||'In progress'; $('[data-eng-progress]',card).textContent=(t?Math.round(d/t*100):0)+'% · '+d+' of '+t+' items'; $('[data-eng-gate]',card).textContent=(M.status.next&&M.status.next.title)||'—'; $('[data-eng-updated]',card).textContent=M.meta.updated||'—'; card.hidden=false; }
   function hubMessage(title,text){ return '<div class="page"><h1>'+title+'</h1><p class="muted">'+text+'</p></div>'; }
@@ -245,7 +246,7 @@
     if(ADMIN_PAGES[page]&&!USERS[wsUser].admin){ location.replace('#/dashboard'); return; }
     closeMenu();
     if(WS_PAGES[page]){ hubEl.hidden=true; view.hidden=false; view.innerHTML= page==='dashboard' ? dashboardHtml(wsUser) : page==='metrics' ? metricsHtml(wsUser) : $('#tpl-'+page).innerHTML; fillUser(view,wsUser); if(page==='support')fillEngagement(view); crumb.textContent=WS_PAGES[page]; window.scrollTo(0,0); }
-    else if(window.JipHub&&JipHub.ready()&&JipHub.has(page)){ view.hidden=true; hubEl.hidden=false; JipHub.render(); crumb.textContent=JipHub.titles[page]||'Build Hub'; }
+    else if(hubReady()&&JipHub.has(page)){ view.hidden=true; hubEl.hidden=false; JipHub.render(); crumb.textContent=JipHub.titles[page]||'Build Hub'; }
     else if(hubState==='ready'){ location.replace('#/dashboard'); return; }
     else { view.hidden=true; hubEl.hidden=false; crumb.textContent='Build Hub';
       hubEl.innerHTML= hubState==='loading' ? hubMessage('Opening the Build Hub…','Decrypting this workspace\'s hub data.')
@@ -253,14 +254,16 @@
         : hubMessage('Build Hub unavailable','The hub data could not be opened. Sign out and back in, or try again in a moment.'); }
     setActive(page); }
   async function mountDash(u,kek,dkRaw){ const user=USERS[u]; if(!user)return; wsUser=u; const dash=$('#dash'); dash.innerHTML=$('#wsTemplate').innerHTML;
+    if(window.JipHub&&JipHub.reset)JipHub.reset();
     fillUser(dash,u); dash.dataset.user=u; if(user.admin)dash.dataset.admin='1'; else{ delete dash.dataset.admin; $$('[data-admin-only]',dash).forEach(el=>el.remove()); }
+    if(!user.hub)$$('.side .cnt',dash).forEach(el=>el.remove());
     $('#signinWrap').hidden=true; dash.hidden=false;
     hubState=user.hub?'loading':'none'; wsRoute();
     if(user.hub){ try{ const q=ASSET_V?'?v='+ASSET_V:''; const opened=await openHub(user.hub,u,kek,dkRaw); if(!window.JipHub)await loadScript('/assets/hub.js'+q);
         JipHub.init(opened.data,{main:$('#hubView'),admin:!!user.admin,onRender:()=>{refreshCounts();}}); hubState='ready'; try{sessionStorage.setItem(SESSION_KEY,b64e(opened.dk))}catch(e){} refreshCounts(); }
       catch(e){ hubState='error'; }
       if(!WS_PAGES[parseRoute()]||parseRoute()==='dashboard')wsRoute(); } }
-  function signOut(){ closeMenu(); try{sessionStorage.removeItem(SESSION);sessionStorage.removeItem(SESSION_KEY)}catch(e){} wsUser=null; hubState='none'; $('#dash').hidden=true; $('#dash').innerHTML=''; delete $('#dash').dataset.admin; $('#signinWrap').hidden=false; history.replaceState(null,'',location.pathname); const f=$('#signin'); f.reset(); $('#s-user').focus(); }
+  function signOut(){ closeMenu(); try{sessionStorage.removeItem(SESSION);sessionStorage.removeItem(SESSION_KEY)}catch(e){} wsUser=null; hubState='none'; if(window.JipHub&&JipHub.reset)JipHub.reset(); $('#dash').hidden=true; $('#dash').innerHTML=''; delete $('#dash').dataset.admin; $('#signinWrap').hidden=false; history.replaceState(null,'',location.pathname); const f=$('#signin'); f.reset(); $('#s-user').focus(); }
   if($('#signin')){
     let saved=null, savedKey=null; try{saved=sessionStorage.getItem(SESSION);savedKey=sessionStorage.getItem(SESSION_KEY)}catch(e){}
     if(saved&&USERS[saved]) mountDash(saved,null,savedKey?b64d(savedKey):null);
