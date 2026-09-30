@@ -453,6 +453,7 @@ return {
     OPTS.main = opts.main; OPTS.onRender = opts.onRender || null; OPTS.admin = !!opts.admin;
     Store.init();
   },
+  reset: function () { H = null; M = null; C = null; DOCS = null; NODE = {}; OPTS.main = null; OPTS.onRender = null; OPTS.admin = false; },
   ready: function () { return !!M; },
   has: function (page) { return !!P[page] && page !== "notfound"; },
   render: render,
