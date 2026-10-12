@@ -9,6 +9,10 @@ var $$ = function (s, r) { return Array.prototype.slice.call((r || document).que
 function esc(s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
 function chip(cls, txt) { return '<span class="chip ' + esc(cls) + '">' + esc(txt) + '</span>'; }
 function statusLabel(s) { return ({ done: "done", live: "live", seeded: "seeded", next: "next", planned: "planned", proposed: "proposed", phase3: "phase 3", partial: "partial", placeholder: "placeholder", person: "" })[s] || s; }
+/* Section headings count what the hub data holds instead of carrying a hand-written number. */
+function numWord(n) { return ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen", "twenty"][n] || String(n); }
+function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+function plural(n, one) { return numWord(n) + " " + one + (n === 1 ? "" : "s"); }
 function pageFor(n) {
   if (!n) return null;
   if (n.kind === "workflow") return "#/workflows/" + n.id;
@@ -159,7 +163,7 @@ P.home = function () {
   });
   h += '</div>';
   }
-  h += '<footer class="page">Legacy Build Hub · regenerated at the end of every working session · ' + esc(M.meta.updated) + "</footer></div>";
+  h += '<footer class="page">' + esc(M.meta.name || "Build Hub") + (M.meta.release ? " · " + esc(M.meta.release) : "") + ' · regenerated at the end of every working session · ' + esc(M.meta.updated) + "</footer></div>";
   return h;
 };
 P.home.after = function () {
@@ -254,7 +258,9 @@ function paintTrace(key) {
 }
 function panelFor(id) {
   var n = NODE[id], pin = $("#panelin"); if (!pin) return;
-  if (!n) { pin.innerHTML = '<h3>Pick anything</h3><p class="desc muted">Hover to see what a piece touches. Click to pin it here with its status, what it reads and writes, who it calls, and a link to its page.</p><div class="conn"><h4>Start with</h4><a href="#/map?focus=WF-02">WF-02 — the front door</a><a href="#/map?focus=sales_order_header">sales_order_header — the table you build next</a><a href="#/map?trace=sales_order">Trace a sales order</a></div>'; return; }
+  if (!n) {
+    var nx = M.nodes.filter(function (x) { return x.kind === "workflow" && x.status === "next"; })[0];
+    pin.innerHTML = '<h3>Pick anything</h3><p class="desc muted">Hover to see what a piece touches. Click to pin it here with its status, what it reads and writes, who it calls, and a link to its page.</p><div class="conn"><h4>Start with</h4><a href="#/map?focus=WF-02">WF-02 — the front door</a>' + (nx ? '<a href="#/map?focus=' + esc(nx.id) + '">' + esc(nx.label) + " — in progress</a>" : "") + '<a href="#/map?trace=sales_order">Trace a sales order</a></div>'; return; }
   var groups = {};
   M.edges.forEach(function (e) {
     if (e.from === id) { (groups[e.type] = groups[e.type] || []).push({ n: NODE[e.to], dir: "→", label: e.label }); }
@@ -312,7 +318,7 @@ P.workflows = function (param) {
       '<div class="sect"><h2>What tripped us here</h2>' + ((d.gotchas || []).length ? '<ul class="list">' + d.gotchas.map(function (g) { return "<li>" + esc(g) + "</li>"; }).join("") + "</ul>" : '<p class="empty">Nothing yet.</p>') + "</div>" +
       '<div class="sect card"><div class="in"><h3>Next for this workflow</h3><p style="margin-top:6px">' + esc(d.next || "—") + '</p><p class="small" style="margin-top:10px"><a href="#/map?focus=' + esc(n.id) + '">See it on the map →</a></p></div></div></div>';
   }
-  return '<div class="page wide"><div class="pagehead"><p class="eyebrow">Workflows</p><h1>Eleven small workflows, one job each</h1><p class="lede">Hub-and-spoke: focused workflows call shared services instead of duplicating logic. Nothing writes to a business table without WF-08 saying yes; nothing fails without WF-09 or WF-00 leaving a row.</p></div><div class="cards">' + wfs.map(wfCard).join("") + "</div></div>";
+  return '<div class="page wide"><div class="pagehead"><p class="eyebrow">Workflows</p><h1>' + cap(numWord(wfs.length)) + ' small workflows, one job each</h1><p class="lede">Hub-and-spoke: focused workflows call shared services instead of duplicating logic. Nothing writes to a business table without WF-08 saying yes; nothing fails without WF-09 or WF-00 leaving a row.</p></div><div class="cards">' + wfs.map(wfCard).join("") + "</div></div>";
 };
 
 /* ---- data model ---- */
@@ -327,13 +333,15 @@ P.data = function (param) {
       '<div class="cards"><div class="card"><div class="in"><h3>Written by</h3><div class="row" style="margin-top:8px">' + (writers.length ? writers.map(function (w) { return '<a class="chip link" href="' + pageFor(w) + '">' + esc(w.label) + "</a>"; }).join("") : '<span class="muted small">' + esc(spec.written_by) + "</span>") + '</div></div></div><div class="card"><div class="in"><h3>Read by</h3><div class="row" style="margin-top:8px">' + (readers.length ? readers.map(function (w) { return '<a class="chip link" href="' + pageFor(w) + '">' + esc(w.label) + "</a>"; }).join("") : '<span class="empty">no readers drawn</span>') + '</div></div></div><div class="card"><div class="in"><h3>Links to</h3><div class="row" style="margin-top:8px">' + (links.length ? links.map(function (l) { var t = l.split(" ")[0]; return '<a class="chip link" href="#/data/' + esc(t) + '">' + esc(l) + "</a>"; }).join("") : '<span class="empty">—</span>') + "</div></div></div></div>" +
       '<div class="sect card"><div class="in"><h3>Fields</h3><p class="muted small" style="margin:4px 0 10px">Names and types are exact — build Airtable from this list, top to bottom. Formula fields last.</p><div class="tblwrap"><table class="t"><thead><tr><th>Field</th><th>Type</th><th>Notes / options</th></tr></thead><tbody>' + spec.fields.map(function (f) { return '<tr><td class="mono">' + esc(f[0]) + "</td><td>" + esc(f[1]) + "</td><td>" + esc(f[2]) + "</td></tr>"; }).join("") + '</tbody></table></div></div></div><p class="small" style="margin-top:14px"><a href="#/map?focus=' + esc(n.id) + '">See it on the map →</a></p></div>';
   }
-  return '<div class="page wide"><div class="pagehead"><p class="eyebrow">Data model</p><h1>One base, thirteen tables</h1><p class="lede">Three master tables people maintain, ten operational tables workflows write. Operational tables are created just-in-time, alongside the workflow that first writes to them. Click a table for its field spec.</p></div><div class="cards">' +
+  var master = tables.filter(function (n) { return /_master/.test(n.id); }).length;
+  return '<div class="page wide"><div class="pagehead"><p class="eyebrow">Data model</p><h1>One base, ' + plural(tables.length, "table") + '</h1><p class="lede">' + cap(plural(master, "master table")) + ' people maintain, ' + plural(tables.length - master, "operational table") + ' workflows write. Operational tables are created just-in-time, alongside the workflow that first writes to them. Click a table for its field spec.</p></div><div class="cards">' +
     tables.map(function (n) { var spec = M.tables[n.id] || { fields: [] }; var links = spec.fields.filter(function (f) { return /Link →/.test(f[1]); }).map(function (f) { return f[1].replace("Link → ", "").split(" ")[0]; }); return '<div class="card wfcard"><div class="in"><div class="row" style="justify-content:space-between">' + chip(n.status, statusLabel(n.status)) + '<span class="muted small">' + spec.fields.length + ' fields</span></div><h3 class="mono" style="margin-top:8px;font-size:15px"><a href="#/data/' + esc(n.id) + '">' + esc(n.label) + '</a></h3><div class="sub">' + esc(n.sub) + " · written by " + esc(spec.written_by || "") + '</div><p class="desc">' + esc(n.desc) + "</p>" + (links.length ? '<div class="row" style="margin-top:10px">' + links.map(function (l) { return '<a class="chip link" href="#/data/' + esc(l) + '">→ ' + esc(l) + "</a>"; }).join("") + "</div>" : "") + "</div></div>"; }).join("") + "</div></div>";
 };
 
 /* ---- people ---- */
 P.people = function () {
-  return '<div class="page wide"><div class="pagehead"><p class="eyebrow">People &amp; roles</p><h1>Who touches the system</h1><p class="lede">Four people at Legacy, one builder, and the roles from Ken\'s SOP matrix that the gates and alerts are routed to. The name-to-role mapping is Ken\'s to confirm.</p></div><div class="cards">' +
+  var builders = M.people.filter(function (p) { return /builder/i.test(p.title || ""); }).length, staff = M.people.length - builders;
+  return '<div class="page wide"><div class="pagehead"><p class="eyebrow">People &amp; roles</p><h1>Who touches the system</h1><p class="lede">' + cap(plural(staff, "person").replace(/persons$/, "people")) + ' at ' + esc(clientName()) + ', ' + plural(builders, "builder") + ', and the roles from Ken\'s SOP matrix that the gates and alerts are routed to. The name-to-role mapping is Ken\'s to confirm.</p></div><div class="cards">' +
     M.people.map(function (p) { return '<div class="card"><div class="in"><h3>' + esc(p.name) + '</h3><div class="muted small" style="margin-top:2px">' + esc(p.title) + '</div><p style="margin-top:10px;font-size:14px">' + esc(p.role) + '</p><dl class="kv" style="margin-top:10px"><dt>Gates</dt><dd>' + esc(p.gates) + "</dd><dt>Confirmed</dt><dd>" + (p.confirmed === true ? "yes" : esc(p.confirmed)) + "</dd></dl></div></div>"; }).join("") +
     '</div><div class="sect card"><div class="in"><h3>Roles in Ken\'s SOP matrix</h3><div class="tblwrap" style="margin-top:10px"><table class="t"><thead><tr><th>Role</th><th>Does</th><th>Gates</th><th>Who</th></tr></thead><tbody>' + M.roles.map(function (r) { return "<tr><td><b>" + esc(r.role) + "</b></td><td>" + esc(r.does) + "</td><td>" + esc(r.gates) + "</td><td>" + esc(r.who) + "</td></tr>"; }).join("") + "</tbody></table></div></div></div></div>";
 };
