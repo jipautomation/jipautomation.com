@@ -126,9 +126,11 @@ function parseHash() {
 function counts() {
   var st = (Store.state.ken && Store.state.ken.items) || {}, kenOpen = 0;
   (M.ken_tracker.groups || []).forEach(function (g) { g.items.forEach(function (it) { if ((st[it.id] || {}).status !== "answered") kenOpen++; }); });
-  var done = Store.state.checklist.done, t = 0, d = 0;
-  C.sections.forEach(function (sec) { if (String(sec.phase || 2) !== "2") return; sec.items.forEach(function (it) { t++; if (done.indexOf(it.id) >= 0) d++; }); });
-  return { workflows: M.nodes.filter(function (n) { return n.kind === "workflow"; }).length, data: M.nodes.filter(function (n) { return n.kind === "table"; }).length, ken: kenOpen, archive: M.docs.length, gotchas: M.gotchas.length, glossary: M.glossary.length, checklist: d + "/" + t };
+  /* The Checklist badge carries one count per phase that has ticks ("59/77 · 4/39"), never a single total across phases. */
+  var done = Store.state.checklist.done, per = {};
+  C.sections.forEach(function (sec) { var k = String(sec.phase || 2); per[k] = per[k] || { t: 0, d: 0 }; sec.items.forEach(function (it) { per[k].t++; if (done.indexOf(it.id) >= 0) per[k].d++; }); });
+  var phases = Object.keys(per).sort(), shown = phases.filter(function (k) { return per[k].d > 0; }); if (!shown.length) shown = phases.slice(0, 1);
+  return { workflows: M.nodes.filter(function (n) { return n.kind === "workflow"; }).length, data: M.nodes.filter(function (n) { return n.kind === "table"; }).length, ken: kenOpen, archive: M.docs.length, gotchas: M.gotchas.length, glossary: M.glossary.length, checklist: shown.map(function (k) { return per[k].d + "/" + per[k].t; }).join(" · ") };
 }
 function clientName() { return (M && M.meta && (M.meta.client_short || (M.meta.org || "").split(" · ")[0])) || "the client"; }
 var TITLES = { home: "Build notes", map: "Project Map", lifecycle: "Deal Lifecycle", workflows: "Workflows", data: "Data Model", checklist: "Checklist", gotchas: "Gotchas", people: "People & Roles", glossary: "Glossary", ken: "Inputs Needed" };

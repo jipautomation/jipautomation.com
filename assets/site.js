@@ -136,11 +136,13 @@
       {l:'Last update',v:String(meta.updated||'—').replace(/, \d{4}$/,''),n:'Release '+(meta.release||'—')}];
     const ph=C.phases||{}; const t=k=>((ph[k]&&ph[k].title)||('Phase '+k)).split(' — ');
     const p3=count(secs(3)), p4=count(secs(4));
-    d.project={title:'Project · '+(meta.phase||''),note:p2.d+' of '+p2.t+' Phase 2 items done',phases:[
+    /* Later phases are counted per phase once they have ticks (Phase 3 opened early); never folded into one total. */
+    const later=p=>p.d?p.d+' of '+p.t+' items · started':p.t+' items · planned';
+    d.project={title:'Project · '+(meta.phase||''),note:p2.d+' of '+p2.t+' Phase 2'+(p3.d?' · '+p3.d+' of '+p3.t+' Phase 3':'')+' items done',phases:[
       {label:'Phase 1 · Foundation',small:'Database, review gate, alerts · done',state:'done'},
       {label:'Phase 2 · '+(t(2)[1]||'Extraction pipeline'),small:p2.d+' of '+p2.t+' items · in progress',state:'now'},
-      {label:'Phase 3 · '+(t(3)[1]||''),small:p3.t+' items · planned',state:''},
-      {label:'Phase 4 · '+(t(4)[1]||''),small:p4.t+' items · planned',state:''}],
+      {label:'Phase 3 · '+(t(3)[1]||''),small:later(p3),state:''},
+      {label:'Phase 4 · '+(t(4)[1]||''),small:later(p4),state:''}],
       now:M.status.now||null,next:M.status.next||null};
     const needs=[]; (M.ken_tracker.groups||[]).forEach(g=>g.items.forEach(it=>{ const st=kenSt[it.id]||{}; if(st.status!=='answered') needs.push({item:it.item,urg:it.urgency,who:it.who,unblocks:it.unblocks,status:st.status||'open'}); }));
     const ord={now:0,soon:1,later:2}; needs.sort((a,b)=>ord[a.urg]-ord[b.urg]);
